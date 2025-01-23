@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { X, Plus, Minus } from 'lucide-react';
 import CloseButton from './CloseButton';
+import cosmicBg from '../assets/cosmic_blue.jpg';
+import '../index.css';
+
 
 const LeaguePerformanceTracker = () => {
   const [players, setPlayers] = useState([]);
@@ -125,8 +128,20 @@ const LeaguePerformanceTracker = () => {
   };
 
   return (
-    <div className="max-w-[600px] mx-auto p-5">
-      <h1 className="text-2xl font-bold mb-4">League Performance Tracker</h1>
+    <div
+    className="w-screen h-screen"
+    style={{
+      height: '100vh',
+      backgroundImage: `url(${cosmicBg})`,
+      backgroundSize: 'cover',
+      backgroundRepeat: 'no-repeat',
+      boxSizing: 'border-box',  // Ensure no overflow from padding or borders
+    }}
+  >
+    
+    <h1 className="text-2xl font-bold mb-4" style={{ color: '#034f84', margin: 0, padding: 0 }}>
+      League Performance Tracker
+    </h1>
 
       <div className="mb-5">
         <input
@@ -162,7 +177,7 @@ const LeaguePerformanceTracker = () => {
 
       <div>
         <h2 className="text-xl font-bold mb-4">{selectedCategory} Leaderboard</h2>
-        <BarChart width={600} height={400} data={getPlayerPoints()}>
+        <BarChart width={600} height={400} data={getPlayerPoints()} className="max-w-full">
             <XAxis dataKey="name" />
             <YAxis />
             <CartesianGrid strokeDasharray="3 3" />
@@ -177,8 +192,8 @@ const LeaguePerformanceTracker = () => {
             >
             <div 
                 onClick={() => setModalState(player)}
-                className={`cursor-pointer flex-grow flex justify-between items-center hover:bg-gray-100 p-2 rounded ${
-                modalState?.name === player.name ? 'text-blue-500' : ''
+                className={`cursor-pointer flex-grow flex justify-between items-center  ${
+                modalState?.name === player.name ? '#034f84' : ''
                 }`}
             >
                 <span>{index + 1}. {player.name}</span>
