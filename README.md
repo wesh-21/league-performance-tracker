@@ -14,3 +14,11 @@ Color Pallette for this project:
 #00204a
 #005792
 #d9faff
+
+#272471   # bars in bar chart
+#2b2a33   # input box fill
+#6f6b6a   # input box text
+#d1cdc7
+#33373a
+
+#e8e6e3  # Buttons text

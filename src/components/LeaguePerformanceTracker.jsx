@@ -131,7 +131,7 @@ const LeaguePerformanceTracker = () => {
           value={playerName}
           onChange={(e) => setPlayerName(e.target.value)}
           placeholder="Enter player name"
-          className="mr-2 px-2 py-1 border rounded"
+          className="input-field"
         />
         <button
           onClick={addPlayer}
@@ -160,12 +160,12 @@ const LeaguePerformanceTracker = () => {
       <div>
         <h2>{activeTab} Leaderboard</h2>
         
-        <BarChart width={800} height={400} data={getPlayerPoints()}>
+        <BarChart width={500} height={400} data={getPlayerPoints()}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
-          <Bar dataKey="points" fill="#8884d8" />
+          <Bar dataKey="points" fill="#272471" />
         </BarChart>
       </div>
 
