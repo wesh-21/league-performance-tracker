@@ -32,8 +32,20 @@ body {
 /* Header */
 h1 {
   font-size: 2.5rem;
-  color: #00bfff; /* Light blue */
+  color: #00204a; /* Light blue */
   margin-bottom: 1rem;
+}
+
+/* Main Header */
+.main-header {
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Keep content vertically aligned */
+  width: 100%;
+  padding: 1rem;
+  position: absolute; /* Position it explicitly */
+  top: 0; /* Align it to the top of the page */
+  color: #00204a; /* Light blue */
 }
 
 /* Input and Buttons */
@@ -102,3 +114,98 @@ label {
   font-size: 1rem;
   margin-top: 0.5rem;
 }
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Aligns modal to the right */
+  z-index: 50;
+}
+
+/* Modal Container */
+.modal-container {
+  background-color: #ffffff;
+  width: 25%;
+  height: 100%;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.modal-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-footer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Button Styles */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-add {
+  background-color: #005792;
+  color: #ffffff;
+}
+
+.btn-add:hover {
+  background-color: #00204a;
+}
+
+.btn-remove {
+  background-color: #9b3535;
+  color: #ffffff;
+}
+
+.btn-remove:hover {
+  background-color: #c45511;
+}
+
+.btn-delete {
+  background-color: #4a5568;
+  color: #ffffff;
+}
+
+.btn-delete:hover {
+  background-color: #c53030;
+}
+
+.btn-close {
+  background-color: #4a5568;
+  color: #ffffff;
+}
+
+.btn-close:hover {
+  background-color: #2d3748;
+}
+

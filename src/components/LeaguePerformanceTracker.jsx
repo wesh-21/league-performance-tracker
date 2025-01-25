@@ -1,146 +1,155 @@
-import React, { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
-import CloseButton from './CloseButton'; // Assuming you have a CloseButton component
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import cosmicBg from "../assets/cosmic_blue.jpg"; // Ensure this file exists
 
 const LeaguePerformanceTracker = () => {
   const [players, setPlayers] = useState([]);
-  const [newPlayerName, setNewPlayerName] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Overall');
-  const [modalState, setModalState] = useState(null);
-  const CATEGORIES = ['Overall', 'Vision Score', 'Damage', 'Gold Earned', 'KDA', 'CS'];
+  const [playerName, setPlayerName] = useState("");
+  const [activeTab, setActiveTab] = useState("Overall");
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
-  // Add a new player to the list
-  const addPlayer = () => {
-    if (newPlayerName && !players.some(p => p.name === newPlayerName)) {
-      setPlayers([
-        ...players,
-        { name: newPlayerName, points: CATEGORIES.reduce((obj, cat) => ({ ...obj, [cat]: 0 }), {}) }
-      ]);
-      setNewPlayerName('');
+  const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
+
+  // Fetch players on load
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  const fetchPlayers = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/players");
+      setPlayers(response.data);
+    } catch (error) {
+      console.error("Error fetching players:", error);
     }
   };
 
-  // Remove a player from the list
-  const removePlayer = (playerName) => {
-    setPlayers(players.filter(player => player.name !== playerName));
+  const addPlayer = async () => {
+    if (playerName.trim()) {
+      try {
+        await axios.post("http://localhost:5000/players", { name: playerName });
+        setPlayerName("");
+        fetchPlayers();
+      } catch (error) {
+        console.error("Error adding player:", error);
+      }
+    }
   };
 
-  // Add points to a player
-  const addPoint = (playerName, category) => {
-    setPlayers(players.map(player => (
-      player.name === playerName
-        ? { ...player, points: { ...player.points, [category]: player.points[category] + 1 } }
-        : player
-    )));
+  const modifyPlayerPoints = async (id, category, value) => {
+    const formattedCategory = category.toLowerCase().replace(" ", "_");
+    try {
+      await axios.put(`http://localhost:5000/players/${id}/${formattedCategory}`, { value });
+      fetchPlayers();
+    } catch (error) {
+      console.error(`Error updating ${category} points for player ID ${id}:`, error);
+    }
   };
 
-  // Remove points from a player
-  const removePoints = (playerName, category, pointsToRemove) => {
-    setPlayers(players.map(player => (
-      player.name === playerName
-        ? { ...player, points: { ...player.points, [category]: Math.max(player.points[category] - pointsToRemove, 0) } }
-        : player
-    )));
+  const deletePlayer = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/players/${id}`);
+      fetchPlayers();
+    } catch (error) {
+      console.error("Error deleting player:", error);
+    }
   };
 
-  // Get player points based on selected category
   const getPlayerPoints = () => {
-    if (selectedCategory === 'Overall') {
-      return players.map(player => ({
+    if (activeTab === "Overall") {
+      return players.map((player) => ({
+        id: player.id,
         name: player.name,
-        points: Object.values(player.points).reduce((sum, points) => sum + points, 0)
-      })).sort((a, b) => b.points - a.points);
+        points: CATEGORIES.slice(1).reduce(
+          (sum, category) => sum + (player[category.toUpperCase().replace(" ", "_")] || 0),
+          0
+        ),
+      }));
     }
-
-    return players.map(player => ({
+    return players.map((player) => ({
+      id: player.id,
       name: player.name,
-      points: player.points[selectedCategory]
-    })).sort((a, b) => b.points - a.points);
+      points: player[activeTab.toUpperCase().replace(" ", "_")] || 0,
+    }));
   };
 
-  // Modal for adding/removing points
-  const PointManagementModal = ({ player, onClose, removePlayer }) => {
-    const [stage, setStage] = useState('action');
-    const [selectedCategory, setSelectedCategory] = useState(null);
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg relative">
-          {stage === 'action' && (
-            <div>
-              <div className="flex space-x-4">
-                <button 
-                  onClick={() => setStage('add')} 
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                >
-                  Add Points
-                </button>
-                <button 
-                  onClick={() => setStage('remove')} 
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                >
-                  Remove Points
-                </button>
-                <button 
-                  onClick={() => removePlayer(player.name)} // Pass removePlayer to the button
-                  className="ml-2 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                >
-                  Remove Player
-                </button>
-                <CloseButton onClick={onClose} />
-              </div>
+  const PointManagementModal = ({ player, onClose }) => (
+    <div className="modal-overlay">
+      <div className="modal-container">
+        <h2 className="modal-title">Manage Points for {player.name}</h2>
+        <div className="modal-grid">
+          {CATEGORIES.slice(1).map((category) => (
+            <div key={category} className="modal-item">
+              <button
+                onClick={() => modifyPlayerPoints(player.id, category, 1)}
+                className="btn btn-add"
+              >
+                +1 {category}
+              </button>
+              <button
+                onClick={() => modifyPlayerPoints(player.id, category, -1)}
+                className="btn btn-remove"
+              >
+                -1 {category}
+              </button>
             </div>
-          )}
-
-          {(stage === 'add' || stage === 'remove') && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">{stage === 'add' ? 'Add' : 'Remove'} Points</h2>
-              <div className="grid grid-cols-3 gap-2">
-                {CATEGORIES.slice(1).map(category => (
-                  <button
-                    key={category}
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      stage === 'add' 
-                        ? addPoint(player.name, category) 
-                        : removePoints(player.name, category, 1);
-                      onClose();
-                    }}
-                    className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600"
-                  >
-                    {stage === 'add' ? '+1 ' : '-1 '}{category}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          ))}
+        </div>
+        <div className="modal-footer">
+          <button
+            onClick={() => deletePlayer(player.id)}
+            className="btn btn-delete"
+          >
+            Remove Player
+          </button>
+          <button
+            onClick={onClose}
+            className="btn btn-close"
+          >
+            Close
+          </button>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+  
+  
 
   return (
-    <div className="w-screen h-screen">
-      <h1>League Performance Tracker</h1>
+    <div
+      className="w-screen h-screen"
+    >
+      <h1 className="main-header">
+        League Performance Tracker
+      </h1>
 
       {/* Add Player Section */}
-      <div>
+      <div className="mb-5">
         <input
           type="text"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
           placeholder="Enter player name"
-          value={newPlayerName}
-          onChange={(e) => setNewPlayerName(e.target.value)}
+          className="mr-2 px-2 py-1 border rounded"
         />
-        <button onClick={addPlayer}>Add Player</button>
+        <button
+          onClick={addPlayer}
+          className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+        >
+          Add Player
+        </button>
       </div>
 
       {/* Tabs */}
-      <div className="tab-buttons">
+      <div className="mb-5">
         {CATEGORIES.map((category) => (
           <button
             key={category}
-            className={category === selectedCategory ? "active" : ""}
-            onClick={() => setSelectedCategory(category)}
+            onClick={() => setActiveTab(category)}
+            className={`mr-2 px-3 py-1 rounded ${
+              activeTab === category ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"
+            }`}
           >
             {category}
           </button>
@@ -148,46 +157,37 @@ const LeaguePerformanceTracker = () => {
       </div>
 
       {/* Bar Chart */}
-      <div className="bar-chart-container">
-        <h2>{selectedCategory} Leaderboard</h2>
-        <BarChart
-          width={Math.min(window.innerWidth * 0.9, 600)} // Responsive width
-          height={Math.min(window.innerHeight * 0.5, 400)} // Responsive height
-          data={getPlayerPoints()}
-        >
+      <div>
+        <h2>{activeTab} Leaderboard</h2>
+        
+        <BarChart width={800} height={400} data={getPlayerPoints()}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
-          <Legend />
           <Bar dataKey="points" fill="#8884d8" />
         </BarChart>
       </div>
 
       {/* Player List */}
       <div>
-        {getPlayerPoints().map((player, index) => (
-          <div 
-            key={player.name}
+        {getPlayerPoints().map((player) => (
+          <div
+            key={player.id}
             className="flex justify-between items-center mb-2 cursor-pointer"
-            onClick={() => setModalState(player)}
+            onClick={() => setSelectedPlayer(player)}
           >
-            <span
-            style={{ color: modalState?.name === player.name ? 'blue' : 'black' }}
-            >
-              {index + 1}. {player.name}
-            </span> 
+            <span>{player.name}</span>
             <span> {player.points} points</span>
           </div>
         ))}
       </div>
 
-      {/* Modal for managing player points */}
-      {modalState && (
-        <PointManagementModal 
-          player={modalState} 
-          onClose={() => setModalState(null)} 
-          removePlayer={removePlayer} // Pass removePlayer to the modal
+      {/* Modal */}
+      {selectedPlayer && (
+        <PointManagementModal
+          player={selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
         />
       )}
     </div>
