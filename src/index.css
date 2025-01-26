@@ -6,21 +6,20 @@ body {
   align-items: center;
   min-height: 100vh;
   background: url('assets/cosmic_blue.jpg') no-repeat center center fixed;
-  background-size: cover; /* Ensure the background image covers the entire viewport */
+  background-size: cover;
   font-family: Arial, sans-serif;
-  color: #ffffff; /* Default text color */
-  overflow-x: hidden; /* Prevent vertical scroll */
+  color: #ffffff;
+  overflow-x: hidden;
 }
 
-/* Root Container */
+/* Root and App Container */
 #root {
   width: 100%;
-  max-width: 1200px; /* Limit max width */
+  max-width: 1200px;
   box-sizing: border-box;
-  overflow: hidden; /* Prevent horizontal scroll */
+  overflow: hidden;
 }
 
-/* App Container */
 .w-screen.h-screen {
   display: flex;
   flex-direction: column;
@@ -31,41 +30,37 @@ body {
   background-color: transparent;
 }
 
-/* Header */
+/* Typography */
 h1 {
   font-size: 2.5rem;
-  color: #d1cdc7; /* Light blue */
+  color: #d1cdc7;
   margin-bottom: 1rem;
 }
 
-/* Main Header */
 .main-header {
   display: flex;
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Keep content vertically aligned */
+  justify-content: center;
+  align-items: center;
   width: 100%;
   padding: 1rem;
-  position: absolute; /* Position it explicitly */
-  top: 0; /* Align it to the top of the page */
-  color: #d1cdc7; /* Light blue */
+  position: absolute;
+  top: 0;
+  color: #d1cdc7;
 }
 
-/* Input and Buttons */
+/* Form Elements */
 .input-field {
-  margin-bottom: 0.5rem;
-  color: #6f6b6a;
-  background-color: #2b2a33;
-}
-
-input {
   padding: 0.5rem;
   font-size: 1rem;
   border-radius: 5px;
   border: 1px solid #555;
   margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #6f6b6a;
+  background-color: #2b2a33;
 }
 
-button {
+.btn-primary {
   padding: 0.5rem 1rem;
   font-size: 1rem;
   background-color: #33373a;
@@ -76,32 +71,56 @@ button {
   transition: background-color 0.3s ease;
 }
 
-button:hover {
+.btn-primary:hover {
   background-color: #666;
 }
 
-/* Tab Buttons */
-.tab-buttons {
-  display: flex;
-  gap: 0.5rem;
-  margin: 1rem 0;
+/* Tab Navigation */
+.tab-button {
+  padding: 0.5rem 1rem;
+  margin-right: 0.5rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #33373a;
+  color: #e8e6e3;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-.tab-buttons button.active {
-  background-color: #00bfff; /* Highlight active tab */
-  color: #000;
+.tab-button:hover {
+  background-color: #666;
+}
+
+.tab-button.active {
+  background-color: #272471;
+  color: #ffffff;
+}
+
+/* Player List */
+.player-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background-color: rgba(43, 42, 51, 0.5);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.player-list-item:hover {
+  background-color: rgba(39, 36, 113, 0.3);
 }
 
 /* Bar Chart Container */
 .bar-chart-container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 90%;
   max-width: 800px;
-  height: auto;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  border: 1px dashed #fff;
   padding: 1rem;
   margin-top: 1rem;
 }
@@ -111,39 +130,29 @@ button:hover {
   height: auto;
 }
 
-/* Misc */
-label {
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-}
-
-.points-label {
-  color: #b4b4ff;
-  font-size: 1rem;
-  margin-top: 0.5rem;
-}
-
-/* Modal Overlay */
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
+  display: flex;  
   align-items: center;
-  justify-content: flex-end; /* Aligns modal to the right */
+  justify-content: flex-end;
   z-index: 50;
 }
 
-/* Modal Container */
 .modal-container {
   background-color: #2b2a33;
   width: 25%;
-  height: 30%;
+  height: 35%;
   padding: 1.5rem;
+  margin-right: 1rem;
+  max-width: 400px;
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
-  display:flex;
+  overflow-x: hidden;
+  display: flex;
   flex-direction: column;
 }
 
@@ -151,19 +160,21 @@ label {
   font-size: 1.25rem;
   font-weight: bold;
   margin-bottom: 1rem;
+  color: #d1cdc7;
 }
 
 .modal-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: 0.5rem;
   margin-bottom: 1rem;
+  margin-right: 1rem;
 }
 
 .modal-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1.5rem;
 }
 
 .modal-footer {
@@ -172,7 +183,8 @@ label {
   justify-content: space-between;
 }
 
-/* Button Styles */
+
+/* Specific Button Styles */
 .btn {
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
@@ -216,4 +228,3 @@ label {
 .btn-close:hover {
   background-color: #2d3748;
 }
-

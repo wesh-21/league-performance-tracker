@@ -1,0 +1,38 @@
+Obtaining PUUID and summonerID from RiotID:
+    (ACCOUNT-V1) https://developer.riotgames.com/apis#account-v1/GET_getByRiotId - 
+    Utilize the endpoint /riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine} to obtain the PUUID associated with a given account by Riot ID (gameName + tagLine).
+
+    (SUMMONER-V4) https://developer.riotgames.com/apis#summoner-v4/GET_getByPUUID - 
+    Access the endpoint /lol/summoner/v4/summoners/by-puuid/{encryptedPUUID} to retrieve summoner data by PUUID, including summonerID.
+
+
+Obtaining Riot ID from PUUID:
+For third-party apps, displaying Riot IDs in place of summoner names within frontend fields is now necessary. 
+If you lack a Riot ID for a particular player in your database or wish to keep it up to date, you can acquire it through the following endpoints:
+    (ACCOUNT-V1) https://developer.riotgames.com/apis#account-v1/GET_getByPuuid - 
+    Use the endpoint /riot/account/v1/accounts/by-puuid/{puuid} to fetch account information (gameName + tagLine) by PUUID.
+
+
+Obtaining Riot ID from summonerID:
+In cases where you do not possess a PUUID for a player, you can employ the player's summonerID to obtain the PUUID:
+    (SUMMONER-V4) https://developer.riotgames.com/apis#summoner-v4/GET_getBySummonerId - 
+    Access the endpoint /lol/summoner/v4/summoners/{encryptedSummonerId} to retrieve summoner data by summonerID, which can be used to obtain the corresponding PUUID.
+
+
+Obtaining match data by matchID:
+/lol/match/v5/matches/{matchId}
+
+
+Obtain list of matches by puuid:
+/lol/match/v5/matches/by-puuid/{puuid}/ids
+
+
+
+puid ch4t r3str1ct3d: UXffrosIxGdjWLiVUGukhnc2iTNmQq4rr1D32QA1sjdu_s9n_8q_6paH7pqs9RrLE7himAcaXpXLLw
+
+/lol/summoner/v4/summoners/by-puuid/UXffrosIxGdjWLiVUGukhnc2iTNmQq4rr1D32QA1sjdu_s9n_8q_6paH7pqs9RrLE7himAcaXpXLLw
+
+
+https://europe.api.riotgames.com
+
+

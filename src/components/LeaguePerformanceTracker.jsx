@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import cosmicBg from "../assets/cosmic_blue.jpg"; // Ensure this file exists
 
-const LeaguePerformanceTracker = () => {
+// Constants
+const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
+
+// Hooks
+const usePlayerManagement = () => {
   const [players, setPlayers] = useState([]);
-  const [playerName, setPlayerName] = useState("");
-  const [activeTab, setActiveTab] = useState("Overall");
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-
-  const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
-
-  // Fetch players on load
-  useEffect(() => {
-    fetchPlayers();
-  }, []);
 
   const fetchPlayers = async () => {
     try {
@@ -25,11 +18,10 @@ const LeaguePerformanceTracker = () => {
     }
   };
 
-  const addPlayer = async () => {
+  const addPlayer = async (playerName) => {
     if (playerName.trim()) {
       try {
         await axios.post("http://localhost:5000/players", { name: playerName });
-        setPlayerName("");
         fetchPlayers();
       } catch (error) {
         console.error("Error adding player:", error);
@@ -38,7 +30,7 @@ const LeaguePerformanceTracker = () => {
   };
 
   const modifyPlayerPoints = async (id, category, value) => {
-    const formattedCategory = category.toLowerCase().replace(" ", "_");
+    const formattedCategory = category.toLowerCase().replace(" ", "_").toUpperCase();
     try {
       await axios.put(`http://localhost:5000/players/${id}/${formattedCategory}`, { value });
       fetchPlayers();
@@ -55,6 +47,73 @@ const LeaguePerformanceTracker = () => {
       console.error("Error deleting player:", error);
     }
   };
+
+  return { 
+    players, 
+    fetchPlayers, 
+    addPlayer, 
+    modifyPlayerPoints, 
+    deletePlayer 
+  };
+};
+
+// Components
+const PointManagementModal = ({ player, onClose, onDelete, onPointModify }) => (
+  <div className="modal-overlay">
+    <div className="modal-container">
+      <h2 className="modal-title">Manage Points for {player.name}</h2>
+      <div className="modal-grid">
+        {CATEGORIES.slice(1).map((category) => (
+          <div key={category} className="modal-item">
+            <button
+              onClick={() => onPointModify(player.id, category, 1)}
+              className="btn btn-add"
+            >
+              +1 {category}
+            </button>
+            <button
+              onClick={() => onPointModify(player.id, category, -1)}
+              className="btn btn-remove"
+            >
+              -1 {category}
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="modal-footer">
+        <button
+          onClick={() => {
+            onDelete(player.id);
+            onClose();
+          }}
+          className="btn btn-delete"
+        >
+          Remove Player
+        </button>
+        <button onClick={onClose} className="btn btn-close">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const LeaguePerformanceTracker = () => {
+  const [playerName, setPlayerName] = useState("");
+  const [activeTab, setActiveTab] = useState("Overall");
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+  const { 
+    players, 
+    fetchPlayers, 
+    addPlayer, 
+    modifyPlayerPoints, 
+    deletePlayer 
+  } = usePlayerManagement();
+
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
 
   const getPlayerPoints = () => {
     if (activeTab === "Overall") {
@@ -74,55 +133,14 @@ const LeaguePerformanceTracker = () => {
     }));
   };
 
-  const PointManagementModal = ({ player, onClose }) => (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <h2 className="modal-title">Manage Points for {player.name}</h2>
-        <div className="modal-grid">
-          {CATEGORIES.slice(1).map((category) => (
-            <div key={category} className="modal-item">
-              <button
-                onClick={() => modifyPlayerPoints(player.id, category, 1)}
-                className="btn btn-add"
-              >
-                +1 {category}
-              </button>
-              <button
-                onClick={() => modifyPlayerPoints(player.id, category, -1)}
-                className="btn btn-remove"
-              >
-                -1 {category}
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className="modal-footer">
-          <button
-            onClick={() => deletePlayer(player.id)}
-            className="btn btn-delete"
-          >
-            Remove Player
-          </button>
-          <button
-            onClick={onClose}
-            className="btn btn-close"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-  
-  
+  const handleAddPlayer = () => {
+    addPlayer(playerName);
+    setPlayerName("");
+  };
 
   return (
-    <div
-      className="w-screen h-screen"
-    >
-      <h1 className="main-header">
-        League Performance Tracker
-      </h1>
+    <div className="w-screen h-screen">
+      <h1 className="main-header">League Performance Tracker</h1>
 
       {/* Add Player Section */}
       <div className="mb-5">
@@ -134,8 +152,8 @@ const LeaguePerformanceTracker = () => {
           className="input-field"
         />
         <button
-          onClick={addPlayer}
-          className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+          onClick={handleAddPlayer}
+          className="btn-primary"
         >
           Add Player
         </button>
@@ -147,9 +165,7 @@ const LeaguePerformanceTracker = () => {
           <button
             key={category}
             onClick={() => setActiveTab(category)}
-            className={`mr-2 px-3 py-1 rounded ${
-              activeTab === category ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"
-            }`}
+            className={`tab-button ${activeTab === category ? 'active' : ''}`}
           >
             {category}
           </button>
@@ -157,9 +173,8 @@ const LeaguePerformanceTracker = () => {
       </div>
 
       {/* Bar Chart */}
-      <div>
+      <div className="bar-chart-container">
         <h2>{activeTab} Leaderboard</h2>
-        
         <BarChart width={500} height={400} data={getPlayerPoints()}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
@@ -174,11 +189,11 @@ const LeaguePerformanceTracker = () => {
         {getPlayerPoints().map((player) => (
           <div
             key={player.id}
-            className="flex justify-between items-center mb-2 cursor-pointer"
-            onClick={() => setSelectedPlayer(player)}
+            className="player-list-item"
+            onClick={() => setSelectedPlayer(players.find(p => p.id === player.id) || null)}
           >
             <span>{player.name}</span>
-            <span> {player.points} points</span>
+            <span>{player.points} points</span>
           </div>
         ))}
       </div>
@@ -188,6 +203,8 @@ const LeaguePerformanceTracker = () => {
         <PointManagementModal
           player={selectedPlayer}
           onClose={() => setSelectedPlayer(null)}
+          onDelete={deletePlayer}
+          onPointModify={modifyPlayerPoints}
         />
       )}
     </div>
