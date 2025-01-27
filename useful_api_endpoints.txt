@@ -35,7 +35,8 @@ puid ch4t r3str1ct3d: UXffrosIxGdjWLiVUGukhnc2iTNmQq4rr1D32QA1sjdu_s9n_8q_6paH7p
 
 https://europe.api.riotgames.com
 
-
+#TODO: handle summoner not found when adding (check add order and input checking before any db change)
+Think how to implement analysis of last 20 games for new players
 
 useful information location:
 kills are in info.participants["playerIndex"].kills
