@@ -18,10 +18,11 @@ const usePlayerManagement = () => {
     }
   };
 
-  const addPlayer = async (playerName) => {
-    if (playerName.trim()) {
+  const addPlayer = async (playerNameandTag) => {
+    if (playerNameandTag.trim()) {
+      const [playerName, tag] = playerNameandTag.split(/\s*#\s*/);
       try {
-        await axios.post("http://localhost:5000/players", { name: playerName });
+        await axios.post("http://localhost:5000/players", { name: playerName, tag: tag });
         fetchPlayers();
       } catch (error) {
         console.error("Error adding player:", error);
@@ -100,8 +101,10 @@ const PointManagementModal = ({ player, onClose, onDelete, onPointModify }) => (
 
 const LeaguePerformanceTracker = () => {
   const [playerName, setPlayerName] = useState("");
+  const [playerNameandTag, setPlayerNameandTag] = useState("");
   const [activeTab, setActiveTab] = useState("Overall");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [loadingPlayerId, setLoadingPlayerId] = useState(null); // Track loading state for player refresh
 
   const { 
     players, 
@@ -113,6 +116,22 @@ const LeaguePerformanceTracker = () => {
 
   useEffect(() => {
     fetchPlayers();
+    const updateLastGames = async () => {
+      try {
+        console.log('Updating last games...');
+        const response = await axios.get('http://localhost:5000/update-last-games');
+        console.log(response.data.message);
+      } catch (error) {
+        console.error('Error updating last games:', error);
+      }
+    };
+  
+    // Call the function immediately and then every 15 minutes
+    updateLastGames();
+    const intervalId = setInterval(updateLastGames, 15 * 60 * 1000);
+  
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const getPlayerPoints = () => {
@@ -134,8 +153,23 @@ const LeaguePerformanceTracker = () => {
   };
 
   const handleAddPlayer = () => {
-    addPlayer(playerName);
-    setPlayerName("");
+    addPlayer(playerNameandTag);
+    setPlayerNameandTag("");
+  };
+
+  // Function to handle player refresh
+  const handleRefreshClick = async (playerId) => {
+    setLoadingPlayerId(playerId); // Set the loading state to show a loading indicator
+
+    try {
+      const response = await axios.get(`http://localhost:5000/update-last-game/${playerId}`);
+      console.log(`Player ${playerId} data updated:`, response.data);
+      fetchPlayers(); // Optionally refresh player data after update
+    } catch (error) {
+      console.error(`Error updating player ${playerId}:`, error);
+    } finally {
+      setLoadingPlayerId(null); // Reset the loading state
+    }
   };
 
   return (
@@ -146,9 +180,9 @@ const LeaguePerformanceTracker = () => {
       <div className="mb-5">
         <input
           type="text"
-          value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
-          placeholder="Enter player name"
+          value={playerNameandTag}
+          onChange={(e) => setPlayerNameandTag(e.target.value)}
+          placeholder="Enter player name + #tag (e.g. ch4t r3str1ct3d #EUW)"
           className="input-field"
         />
         <button
@@ -190,10 +224,18 @@ const LeaguePerformanceTracker = () => {
           <div
             key={player.id}
             className="player-list-item"
-            onClick={() => setSelectedPlayer(players.find(p => p.id === player.id) || null)}
+            
           >
-            <span>{player.name}</span>
+            <span onClick={() => setSelectedPlayer(players.find(p => p.id === player.id) || null)}>
+              {player.name}
+            </span>
             <span>{player.points} points</span>
+            <button
+              onClick={() => handleRefreshClick(player.id)}
+              disabled={loadingPlayerId === player.id} // Disable button while updating
+            >
+              {loadingPlayerId === player.id ? 'Refreshing...' : 'Refresh'}
+            </button>
           </div>
         ))}
       </div>

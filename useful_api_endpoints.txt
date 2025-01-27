@@ -36,3 +36,15 @@ puid ch4t r3str1ct3d: UXffrosIxGdjWLiVUGukhnc2iTNmQq4rr1D32QA1sjdu_s9n_8q_6paH7p
 https://europe.api.riotgames.com
 
 
+
+useful information location:
+kills are in info.participants["playerIndex"].kills
+deaths are in info.participants["playerIndex"].deaths
+kda is in info.participants["playerIndex"].challenges.kda
+champion is in info.participants["playerIndex"].championName
+gold earned is in info.participants["playerIndex"].goldEarned
+total damage dealt to champions is in info.participants["playerIndex"].totalDamageDealtToChampions
+neutral minions killed is in info.participants["playerIndex"].neutralMinionsKilled
+
+
+

@@ -22,3 +22,5 @@ Color Pallette for this project:
 #33373a
 
 #e8e6e3  # Buttons text
+
+https://brand.riotgames.com/en-us/league-of-legends/color/
