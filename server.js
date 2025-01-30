@@ -12,6 +12,7 @@ dotenv.config();
 
 const app = express();
 const PORT = 5000;
+const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // Middleware
 app.use(cors());
@@ -138,7 +139,8 @@ const updatePlayerPoints = async (player, res) => {
     const matchData = await getMatchByMatchId(latestMatchId);
     parseMatchData(matchData, player.puuid, player.id); // Don't pass res to parseMatchData
 
-    fs.writeFileSync(`./matches/${latestMatchId}.json`, JSON.stringify(matchData, null, 2));
+    // uncomment to save data to file
+    //fs.writeFileSync(`./matches/${latestMatchId}.json`, JSON.stringify(matchData, null, 2)); 
 
     db.run(
       'UPDATE players SET last_match_id = ? WHERE id = ?',
@@ -146,7 +148,6 @@ const updatePlayerPoints = async (player, res) => {
     );
 
     // Only send the response once all updates are done
-    res.json({ message: 'Player stats updated successfully' });
 
   } catch (error) {
     console.error(`Error processing player ${player.name}:`, error.message);
@@ -158,12 +159,16 @@ const updatePlayerPoints = async (player, res) => {
 const parseMatchData = (match, puuid, playerId) => {
   const participants = match.info.participants;
   const player = participants.find(p => p.puuid === puuid);
-  console.log("Parsing match data for player:", player.riotIdGameName);
+  console.log("Parsing match data for player:", player?.riotIdGameName);
 
   if (!player) {
     console.error(`Player with PUUID ${puuid} not found in match`);
     return;
   }
+
+
+  // Calculate total CS for the player
+  const totalCs = player.neutralMinionsKilled + player.totalMinionsKilled;
 
   const playerStats = {
     kills: player.kills,
@@ -171,25 +176,41 @@ const parseMatchData = (match, puuid, playerId) => {
     kda: player.challenges.kda || 0,
     goldEarned: player.goldEarned,
     totalDamageDealtToChampions: player.totalDamageDealtToChampions,
-    neutralMinionsKilled: player.neutralMinionsKilled,
+    totalCs: totalCs, // Replace neutralMinionsKilled with totalCs
+    visionScore: player.visionScore,
   };
+
   console.log("Player Stats: ", playerStats);
+
   const bestStats = {
     mostKills: participants.reduce((max, p) => Math.max(max, p.kills), 0),
     bestKDA: participants.reduce((max, p) => Math.max(max, p.challenges.kda || 0), 0),
     mostGold: participants.reduce((max, p) => Math.max(max, p.goldEarned), 0),
     mostDamage: participants.reduce((max, p) => Math.max(max, p.totalDamageDealtToChampions), 0),
-    mostCS: participants.reduce((max, p) => Math.max(max, p.neutralMinionsKilled), 0),
+    mostCS: participants.reduce((max, p) => Math.max(max, p.neutralMinionsKilled + p.totalMinionsKilled), 0), // Adjust for total CS
+    mostVisionScore: participants.reduce((max, p) => Math.max(max, p.visionScore), 0),
   };
   console.log("Best Stats: ", bestStats);
 
-  // Determine points for each category
   const categories = {
-    KDA: playerStats.kda === bestStats.bestKDA ? 1 : 0,
-    DAMAGE: playerStats.totalDamageDealtToChampions === bestStats.mostDamage ? 1 : 0,
-    GOLD_EARNED: playerStats.goldEarned === bestStats.mostGold ? 1 : 0,
-    CS: playerStats.neutralMinionsKilled === bestStats.mostCS ? 1 : 0,
+    KDA: 0,
+    DAMAGE: 0,
+    GOLD_EARNED: 0,
+    CS: 0,
+    VISION_SCORE: 0,
   };
+  // Determine points for each category (Only if player wins)
+  console.log("Player Win: ", player.win);
+
+  if( Boolean(player.win) == true ) {
+    console.log("Ganhamos caralho");
+    categories.KDA = playerStats.kda === bestStats.bestKDA ? 1 : 0;
+    categories.DAMAGE = playerStats.totalDamageDealtToChampions === bestStats.mostDamage ? 1 : 0;
+    categories.GOLD_EARNED = playerStats.goldEarned === bestStats.mostGold ? 1 : 0;
+    categories.CS = playerStats.totalCs === bestStats.mostCS ? 1 : 0;
+    categories.VISION_SCORE = playerStats.visionScore === bestStats.mostVisionScore ? 1 : 0;
+  }
+
   console.log("Categories: ", categories);
 
   // Use Promise.all to update all categories in parallel
@@ -207,6 +228,7 @@ const parseMatchData = (match, puuid, playerId) => {
     console.error('Error updating player stats:', error.message);
   });
 };
+
 
 // Utility function to update a specific field for a player
 const updatePlayerField = (id, field, value, callback) => {

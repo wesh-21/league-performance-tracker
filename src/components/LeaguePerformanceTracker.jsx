@@ -11,6 +11,7 @@ const usePlayerManagement = () => {
 
   const fetchPlayers = async () => {
     try {
+      console.log("Fetching players...");
       const response = await axios.get("http://localhost:5000/players");
       setPlayers(response.data);
     } catch (error) {
@@ -19,14 +20,26 @@ const usePlayerManagement = () => {
   };
 
   const addPlayer = async (playerNameandTag) => {
+    console.log("Adding player ", playerNameandTag);
     if (playerNameandTag.trim()) {
       const [playerName, tag] = playerNameandTag.split(/\s*#\s*/);
       try {
         await axios.post("http://localhost:5000/players", { name: playerName, tag: tag });
-        fetchPlayers();
+        await fetchPlayers();
       } catch (error) {
         console.error("Error adding player:", error);
       }
+    }
+  };
+
+  const updateLastGames = async () => {
+    try {
+      console.log('Updating last games...');
+      const response = await axios.get('http://localhost:5000/update-last-games');
+      console.log(response.data.message);
+      await fetchPlayers();
+    } catch (error) {
+      console.error('Error updating last games:', error);
     }
   };
 
@@ -52,7 +65,8 @@ const usePlayerManagement = () => {
   return { 
     players, 
     fetchPlayers, 
-    addPlayer, 
+    addPlayer,
+    updateLastGames, 
     modifyPlayerPoints, 
     deletePlayer 
   };
@@ -99,40 +113,100 @@ const PointManagementModal = ({ player, onClose, onDelete, onPointModify }) => (
   </div>
 );
 
+const PatchNotesPanel = ({ isVisible, onToggle }) => {
+  const patchNotes = [
+    {
+      version: "1.00",
+      date: "2024-01-30",
+      changes: [
+        "Added new performance tracking metrics",
+        "Improved KDA calculation algorithm",
+        "Fixed bug with vision score tracking",
+        "Updated UI for better readability",
+        "Added support for multiple regions"
+      ]
+    },
+    {
+      version: "13.9",
+      date: "2024-01-15",
+      changes: [
+        "Introduced automated refresh system",
+        "Enhanced player statistics display",
+        "Added sorting functionality",
+        "Fixed player deletion issues",
+        "Improved error handling"
+      ]
+    },
+  ];
+
+  return (
+    <>
+      <button className="patch-notes-toggle" onClick={onToggle}>
+        Patch Notes
+      </button>
+      <div className={`patch-notes-panel ${isVisible ? 'visible' : ''}`}>
+        <h2 className="patch-notes-title"></h2>
+        <div className="patch-notes-content">
+          {patchNotes.map((patch, index) => (
+            <div key={index} className="patch-note">
+              <h3 className="patch-version">Version {patch.version}</h3>
+              <p className="patch-date">{patch.date}</p>
+              <ul className="patch-changes">
+                {patch.changes.map((change, changeIndex) => (
+                  <li key={changeIndex}>{change}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
+
 const LeaguePerformanceTracker = () => {
-  const [playerName, setPlayerName] = useState("");
   const [playerNameandTag, setPlayerNameandTag] = useState("");
   const [activeTab, setActiveTab] = useState("Overall");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [loadingPlayerId, setLoadingPlayerId] = useState(null); // Track loading state for player refresh
+  const [isAddingPlayer, setIsAddingPlayer] = useState(false); // Track add player loading state
+  const [isPatchNotesVisible, setIsPatchNotesVisible] = useState(false);
 
   const { 
     players, 
     fetchPlayers, 
     addPlayer, 
     modifyPlayerPoints, 
-    deletePlayer 
+    deletePlayer,
+    updateLastGames
   } = usePlayerManagement();
 
   useEffect(() => {
-    fetchPlayers();
-    const updateLastGames = async () => {
-      try {
-        console.log('Updating last games...');
-        const response = await axios.get('http://localhost:5000/update-last-games');
-        console.log(response.data.message);
-      } catch (error) {
-        console.error('Error updating last games:', error);
-      }
-    };
-  
-    // Call the function immediately and then every 15 minutes
-    updateLastGames();
-    const intervalId = setInterval(updateLastGames, 15 * 60 * 1000);
-  
-    // Cleanup interval on component unmount
-    return () => clearInterval(intervalId);
+    fetchPlayers(); // Load initial players
+    const intervalId = setInterval(updateLastGames, 15 * 60 * 1000); // Update every 15 minutes
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, []);
+
+  const handleAddPlayer = async () => {
+    if (!playerNameandTag.trim()) return;
+    setIsAddingPlayer(true); // Show loading state
+    await addPlayer(playerNameandTag);
+    setPlayerNameandTag("");
+    setIsAddingPlayer(false); // Hide loading state
+  };
+
+  const handleRefreshClick = async (playerId) => {
+    setLoadingPlayerId(playerId); // Set the loading state to show a loading indicator
+    try {
+      const response = await axios.get(`http://localhost:5000/update-last-game/${playerId}`);
+      console.log(`Player ${playerId} data updated:`, response.data);
+      fetchPlayers(); // Refresh player list
+    } catch (error) {
+      console.error(`Error updating player ${playerId}:`, error);
+    } finally {
+      setLoadingPlayerId(null); // Reset the loading state
+    }
+  };
 
   const getPlayerPoints = () => {
     if (activeTab === "Overall") {
@@ -152,105 +226,100 @@ const LeaguePerformanceTracker = () => {
     }));
   };
 
-  const handleAddPlayer = () => {
-    addPlayer(playerNameandTag);
-    setPlayerNameandTag("");
-  };
-
-  // Function to handle player refresh
-  const handleRefreshClick = async (playerId) => {
-    setLoadingPlayerId(playerId); // Set the loading state to show a loading indicator
-
-    try {
-      const response = await axios.get(`http://localhost:5000/update-last-game/${playerId}`);
-      console.log(`Player ${playerId} data updated:`, response.data);
-      fetchPlayers(); // Optionally refresh player data after update
-    } catch (error) {
-      console.error(`Error updating player ${playerId}:`, error);
-    } finally {
-      setLoadingPlayerId(null); // Reset the loading state
-    }
-  };
-
   return (
-    <div className="w-screen h-screen">
-      <h1 className="main-header">League Performance Tracker</h1>
+    <div className="app-container">
+    <PatchNotesPanel 
+      isVisible={isPatchNotesVisible} 
+      onToggle={() => setIsPatchNotesVisible(!isPatchNotesVisible)} 
+    />
+      <div className="main-content">
+        <div className="w-screen h-screen">
+          <h1 className="main-header">League Performance Tracker</h1>
 
-      {/* Add Player Section */}
-      <div className="mb-5">
-        <input
-          type="text"
-          value={playerNameandTag}
-          onChange={(e) => setPlayerNameandTag(e.target.value)}
-          placeholder="Enter player name + #tag (e.g. ch4t r3str1ct3d #EUW)"
-          className="input-field"
-        />
-        <button
-          onClick={handleAddPlayer}
-          className="btn-primary"
-        >
-          Add Player
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-5">
-        {CATEGORIES.map((category) => (
-          <button
-            key={category}
-            onClick={() => setActiveTab(category)}
-            className={`tab-button ${activeTab === category ? 'active' : ''}`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      {/* Bar Chart */}
-      <div className="bar-chart-container">
-        <h2>{activeTab} Leaderboard</h2>
-        <BarChart width={500} height={400} data={getPlayerPoints()}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="points" fill="#272471" />
-        </BarChart>
-      </div>
-
-      {/* Player List */}
-      <div>
-        {getPlayerPoints().map((player) => (
-          <div
-            key={player.id}
-            className="player-list-item"
-            
-          >
-            <span onClick={() => setSelectedPlayer(players.find(p => p.id === player.id) || null)}>
-              {player.name}
-            </span>
-            <span>{player.points} points</span>
+          {/* Add Player Section */}
+          <div className="add-player-section">
+            <input
+              type="text"
+              value={playerNameandTag}
+              onChange={(e) => setPlayerNameandTag(e.target.value)}
+              placeholder="Enter player name + #tag (e.g. ch4t r3str1ct3d #EUW)"
+              className="input-field"
+            />
             <button
-              onClick={() => handleRefreshClick(player.id)}
-              disabled={loadingPlayerId === player.id} // Disable button while updating
+              onClick={handleAddPlayer}
+              disabled={isAddingPlayer} // Disable button while adding player
+              className="btn-primary"
             >
-              {loadingPlayerId === player.id ? 'Refreshing...' : 'Refresh'}
+              {isAddingPlayer ? "Adding..." : "Add Player"}
             </button>
           </div>
-        ))}
-      </div>
 
-      {/* Modal */}
-      {selectedPlayer && (
-        <PointManagementModal
-          player={selectedPlayer}
-          onClose={() => setSelectedPlayer(null)}
-          onDelete={deletePlayer}
-          onPointModify={modifyPlayerPoints}
-        />
-      )}
+          {/* Tabs */}
+          <div className="tabs">
+            {CATEGORIES.map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveTab(category)}
+                className={`tab-button ${activeTab === category ? "active" : ""}`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {/* Bar Chart */}
+          <div className="bar-chart-container">
+            <h2>{activeTab} Leaderboard</h2>
+            <BarChart width={700} height={400} data={getPlayerPoints()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="points" fill="#272471" />
+            </BarChart>
+          </div>
+
+          {/* Player List */}
+          <div>
+            {getPlayerPoints().map((player) => (
+              <div key={player.id} className="player-list-item">
+                {/* Player Name */}
+                <span
+                  className="player-name"
+                  onClick={() => setSelectedPlayer(players.find((p) => p.id === player.id) || null)}
+                >
+                  {player.name}
+                </span>
+
+                {/* Player Points */}
+                <span className="player-points">{player.points} points</span>
+
+                {/* Refresh Button */}
+                <button
+                  onClick={() => handleRefreshClick(player.id)}
+                  disabled={loadingPlayerId === player.id} // Disable button while refreshing
+                  className="refresh-button"
+                >
+                  {loadingPlayerId === player.id ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Modal */}
+          {selectedPlayer && (
+            <PointManagementModal
+              player={selectedPlayer}
+              onClose={() => setSelectedPlayer(null)}
+              onDelete={deletePlayer}
+              onPointModify={modifyPlayerPoints}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
 export default LeaguePerformanceTracker;
+

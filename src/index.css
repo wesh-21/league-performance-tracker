@@ -96,6 +96,19 @@ h1 {
   color: #ffffff;
 }
 
+.add-player-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 3rem;
+}
+
+.tabs {
+  justify-content: center;
+  align-items: center;
+}
+
 /* Player List */
 .player-list-item {
   display: flex;
@@ -113,13 +126,38 @@ h1 {
   background-color: rgba(39, 36, 113, 0.3);
 }
 
+/* Ensure proper alignment for text */
+.player-name {
+  margin-right: auto;
+  font-weight: bold;
+}
+
+.player-points {
+  margin-left: 1rem;
+}
+
+/* Optional: Style for the refresh button */
+.refresh-button {
+  margin-left: 1rem;
+  padding: 0.2rem 0.5rem;
+  background-color: #5a5b9e;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.refresh-button:hover {
+  background-color: #48488c;
+}
+
 /* Bar Chart Container */
 .bar-chart-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 90%;
+  width: 95%;
   max-width: 800px;
   padding: 1rem;
   margin-top: 1rem;
@@ -227,4 +265,129 @@ h1 {
 
 .btn-close:hover {
   background-color: #2d3748;
+}
+
+
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  margin-left: 0;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.shifted {
+  margin-left: 300px;
+}
+
+.patch-notes-panel {
+  position: fixed;
+  left: -300px;
+  top: 0;
+  width: 300px;
+  height: 100vh;
+  background-color: #1a1a1a;
+  color: #fff;
+  border-right: 1px solid #333;
+  z-index: 100;
+  transition: left 0.3s ease;
+}
+
+.patch-notes-panel.visible {
+  left: 0;
+}
+
+.patch-notes-toggle {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  z-index: 101;
+  padding: 10px 20px;
+  background-color: #272471;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.patch-notes-toggle:hover {
+  background-color: #323291;
+}
+
+.patch-notes-title {
+  padding: 20px;
+  margin: 0;
+  font-size: 1.5rem;
+  background-color: #272471;
+  color: white;
+  text-align: center;
+}
+
+.patch-notes-content {
+  height: calc(100vh - 76px);
+  overflow-y: auto;
+  padding: 35px;
+  scrollbar-width: thin;
+  scrollbar-color: #272471 #1a1a1a;
+}
+
+.patch-notes-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.patch-notes-content::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.patch-notes-content::-webkit-scrollbar-thumb {
+  background-color: #272471;
+  border-radius: 4px;
+}
+
+.patch-note {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #333;
+}
+
+.patch-version {
+  margin: 0 0 5px 0;
+  color: #272471;
+  font-size: 1.2rem;
+}
+
+.patch-date {
+  margin: 0 0 15px 0;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.patch-changes {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.patch-changes li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+  color: #ddd;
+}
+
+@media (max-width: 768px) {
+  .patch-notes-panel {
+    width: 250px;
+    left: -250px;
+  }
+  
+  .main-content.shifted {
+    margin-left: 250px;
+  }
 }

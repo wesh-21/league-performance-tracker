@@ -37,6 +37,8 @@ https://europe.api.riotgames.com
 
 #TODO: handle summoner not found when adding (check add order and input checking before any db change)
 Think how to implement analysis of last 20 games for new players
+# Objective Participation
+
 
 useful information location:
 kills are in info.participants["playerIndex"].kills
@@ -46,6 +48,8 @@ champion is in info.participants["playerIndex"].championName
 gold earned is in info.participants["playerIndex"].goldEarned
 total damage dealt to champions is in info.participants["playerIndex"].totalDamageDealtToChampions
 neutral minions killed is in info.participants["playerIndex"].neutralMinionsKilled
+totalminionskilled is in info.participants["playerIndex"].totalMinionsKilled
+cs = totalminionskilled + neutral minions killed
 
 
 
