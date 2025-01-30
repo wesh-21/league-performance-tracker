@@ -18,6 +18,7 @@ const Login = ({ setAuthToken, setUsername }) => {
 
       setAuthToken(response.data.token);
       localStorage.setItem('authToken', response.data.token); // Store token persistently
+      localStorage.setItem('username', usernameInput); // Store username persistently
       setUsername(usernameInput); // Update the username state in Main
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed. Please try again.');

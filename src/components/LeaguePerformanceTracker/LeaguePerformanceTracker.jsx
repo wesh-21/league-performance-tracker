@@ -4,7 +4,6 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import PatchNotesPanel from "../PatchNotesPanel/PatchNotesPanel";
 import PointManagementModal from "../PointManagementModal/PointManagementModal";
 
-
 // Constants
 const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
 
@@ -75,7 +74,8 @@ const usePlayerManagement = () => {
   };
 };
 
-const LeaguePerformanceTracker = ({ loggedInUser, setAuthToken, setUsername }) => {
+const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
+  const [loggedInUser, setLoggedInUser] = useState('');
   const [playerNameandTag, setPlayerNameandTag] = useState("");
   const [activeTab, setActiveTab] = useState("Overall");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -93,10 +93,23 @@ const LeaguePerformanceTracker = ({ loggedInUser, setAuthToken, setUsername }) =
   } = usePlayerManagement();
 
   useEffect(() => {
+    // Fetch auth token and loggedInUser from localStorage
+    const storedToken = localStorage.getItem("authToken");
+    const storedUser = localStorage.getItem("username");
+
+    if (storedToken) {
+      console.log("Restoring auth token from localStorage:", storedToken);
+      setAuthToken(storedToken); // Restore the token from localStorage
+    }
+
+    if (storedUser) {
+      setLoggedInUser(storedUser); // Restore the username from localStorage
+    }
+
     fetchPlayers(); // Load initial players
     const intervalId = setInterval(updateLastGames, 15 * 60 * 1000); // Update every 15 minutes
     return () => clearInterval(intervalId); // Cleanup on unmount
-  }, []);
+  }, [setAuthToken]);
 
   const handleAddPlayer = async () => {
     if (!playerNameandTag.trim()) return;
@@ -141,6 +154,7 @@ const LeaguePerformanceTracker = ({ loggedInUser, setAuthToken, setUsername }) =
     setAuthToken(null); // Clear auth token
     setUsername(''); // Clear username
     localStorage.removeItem('authToken'); // Remove token from localStorage
+    localStorage.removeItem('username'); // Remove username from localStorage
   };
 
   return (
