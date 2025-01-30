@@ -1,0 +1,95 @@
+.patch-notes-panel {
+    position: fixed;
+    left: -300px;
+    top: 0;
+    width: 300px;
+    height: 100vh;
+    background-color: #1a1a1a;
+    color: #fff;
+    border-right: 1px solid #333;
+    z-index: 100;
+    transition: left 0.3s ease;
+  }
+  
+  .patch-notes-panel.visible {
+    left: 0;
+  }
+  
+  .patch-notes-toggle {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    z-index: 101;
+    padding: 10px 20px;
+    background-color: #272471;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+  }
+  
+  .patch-notes-toggle:hover {
+    background-color: #323291;
+  }
+  
+  .patch-notes-title {
+    padding: 20px;
+    margin: 0;
+    font-size: 1.5rem;
+    background-color: #272471;
+    color: white;
+    text-align: center;
+  }
+  
+  .patch-notes-content {
+    height: calc(100vh - 76px);
+    overflow-y: auto;
+    padding: 35px;
+    scrollbar-width: thin;
+    scrollbar-color: #272471 #1a1a1a;
+  }
+  
+  .patch-notes-content::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .patch-notes-content::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+  
+  .patch-notes-content::-webkit-scrollbar-thumb {
+    background-color: #272471;
+    border-radius: 4px;
+  }
+
+
+  .patch-note {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
+  }
+  
+  .patch-version {
+    margin: 0 0 5px 0;
+    color: #272471;
+    font-size: 1.2rem;
+  }
+  
+  .patch-date {
+    margin: 0 0 15px 0;
+    color: #888;
+    font-size: 0.9rem;
+  }
+  
+  .patch-changes {
+    margin: 0;
+    padding-left: 20px;
+  }
+  
+  .patch-changes li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+    color: #ddd;
+  }

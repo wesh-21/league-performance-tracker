@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import PatchNotesPanel from "../PatchNotesPanel/PatchNotesPanel";
+import PointManagementModal from "../PointManagementModal/PointManagementModal";
+
 
 // Constants
 const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
@@ -72,104 +75,12 @@ const usePlayerManagement = () => {
   };
 };
 
-// Components
-const PointManagementModal = ({ player, onClose, onDelete, onPointModify }) => (
-  <div className="modal-overlay">
-    <div className="modal-container">
-      <h2 className="modal-title">Manage Points for {player.name}</h2>
-      <div className="modal-grid">
-        {CATEGORIES.slice(1).map((category) => (
-          <div key={category} className="modal-item">
-            <button
-              onClick={() => onPointModify(player.id, category, 1)}
-              className="btn btn-add"
-            >
-              +1 {category}
-            </button>
-            <button
-              onClick={() => onPointModify(player.id, category, -1)}
-              className="btn btn-remove"
-            >
-              -1 {category}
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="modal-footer">
-        <button
-          onClick={() => {
-            onDelete(player.id);
-            onClose();
-          }}
-          className="btn btn-delete"
-        >
-          Remove Player
-        </button>
-        <button onClick={onClose} className="btn btn-close">
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-const PatchNotesPanel = ({ isVisible, onToggle }) => {
-  const patchNotes = [
-    {
-      version: "1.00",
-      date: "2024-01-30",
-      changes: [
-        "Added new performance tracking metrics",
-        "Improved KDA calculation algorithm",
-        "Fixed bug with vision score tracking",
-        "Updated UI for better readability",
-        "Added support for multiple regions"
-      ]
-    },
-    {
-      version: "13.9",
-      date: "2024-01-15",
-      changes: [
-        "Introduced automated refresh system",
-        "Enhanced player statistics display",
-        "Added sorting functionality",
-        "Fixed player deletion issues",
-        "Improved error handling"
-      ]
-    },
-  ];
-
-  return (
-    <>
-      <button className="patch-notes-toggle" onClick={onToggle}>
-        Patch Notes
-      </button>
-      <div className={`patch-notes-panel ${isVisible ? 'visible' : ''}`}>
-        <h2 className="patch-notes-title"></h2>
-        <div className="patch-notes-content">
-          {patchNotes.map((patch, index) => (
-            <div key={index} className="patch-note">
-              <h3 className="patch-version">Version {patch.version}</h3>
-              <p className="patch-date">{patch.date}</p>
-              <ul className="patch-changes">
-                {patch.changes.map((change, changeIndex) => (
-                  <li key={changeIndex}>{change}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-};
-
-const LeaguePerformanceTracker = () => {
+const LeaguePerformanceTracker = ({ loggedInUser, setAuthToken, setUsername }) => {
   const [playerNameandTag, setPlayerNameandTag] = useState("");
   const [activeTab, setActiveTab] = useState("Overall");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [loadingPlayerId, setLoadingPlayerId] = useState(null); // Track loading state for player refresh
-  const [isAddingPlayer, setIsAddingPlayer] = useState(false); // Track add player loading state
+  const [loadingPlayerId, setLoadingPlayerId] = useState(null);
+  const [isAddingPlayer, setIsAddingPlayer] = useState(false);
   const [isPatchNotesVisible, setIsPatchNotesVisible] = useState(false);
 
   const { 
@@ -226,15 +137,26 @@ const LeaguePerformanceTracker = () => {
     }));
   };
 
+  const handleLogout = () => {
+    setAuthToken(null); // Clear auth token
+    setUsername(''); // Clear username
+    localStorage.removeItem('authToken'); // Remove token from localStorage
+  };
+
   return (
     <div className="app-container">
-    <PatchNotesPanel 
-      isVisible={isPatchNotesVisible} 
-      onToggle={() => setIsPatchNotesVisible(!isPatchNotesVisible)} 
-    />
+      <PatchNotesPanel 
+        isVisible={isPatchNotesVisible} 
+        onToggle={() => setIsPatchNotesVisible(!isPatchNotesVisible)} 
+      />
       <div className="main-content">
         <div className="w-screen h-screen">
           <h1 className="main-header">League Performance Tracker</h1>
+
+          {/* Display the logged in user's username */}
+          <div className="user-info">
+            <span>Welcome, {loggedInUser}!</span>
+          </div>
 
           {/* Add Player Section */}
           <div className="add-player-section">
@@ -315,6 +237,11 @@ const LeaguePerformanceTracker = () => {
               onPointModify={modifyPlayerPoints}
             />
           )}
+
+          {/* Logout Button */}
+          <button onClick={handleLogout} className="btn-secondary">
+            Logout
+          </button>
         </div>
       </div>
     </div>
@@ -322,4 +249,3 @@ const LeaguePerformanceTracker = () => {
 };
 
 export default LeaguePerformanceTracker;
-

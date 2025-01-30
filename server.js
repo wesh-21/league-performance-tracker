@@ -4,6 +4,8 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
 // Import the functions from RiotApi.js
 import { getPuuidByRiotId, getMatchesByPuuid, getMatchByMatchId } from './RiotApi.js';
@@ -13,6 +15,7 @@ dotenv.config();
 const app = express();
 const PORT = 5000;
 const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
+
 
 // Middleware
 app.use(cors());
@@ -37,10 +40,52 @@ const db = new sqlite3.Database('./players.db', (err) => {
         DAMAGE INTEGER NOT NULL DEFAULT 0,
         GOLD_EARNED INTEGER NOT NULL DEFAULT 0,
         CS INTEGER NOT NULL DEFAULT 0
-      )
+      ); 
+      CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL
+    )
     `);
   }
 });
+
+// User Authentication
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  db.run(
+    'INSERT INTO users (username, password) VALUES (?, ?)',
+    [username, hashedPassword],
+    (err) => {
+      if (err) {
+        res.status(400).json({ error: 'User registration failed' });
+      } else {
+        res.json({ message: 'User registered successfully' });
+      }
+    }
+  );
+});
+
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
+    if (err || !user) {
+      res.status(404).json({ error: 'User not found' });
+    } else {
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        res.status(401).json({ error: 'Invalid password' });
+      } else {
+        const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: '1h' });
+        res.json({ message: 'Login successful', token });
+      }
+    }
+  });
+});
+
 
 // Get all players
 app.get('/players', (req, res) => {
@@ -151,7 +196,6 @@ const updatePlayerPoints = async (player, res) => {
 
   } catch (error) {
     console.error(`Error processing player ${player.name}:`, error.message);
-    res.status(500).json({ error: 'Server error during player update', details: error.message });
   }
 };
 

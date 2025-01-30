@@ -1,0 +1,19 @@
+/* Login Page */
+.login-container {
+    text-align: center;
+    margin-top: 50px;
+  }
+  
+  .login-container input {
+    display: block;
+    margin: 10px auto;
+    padding: 8px;
+  }
+  
+  .login-container button {
+    padding: 10px 15px;
+    background-color: blue;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
