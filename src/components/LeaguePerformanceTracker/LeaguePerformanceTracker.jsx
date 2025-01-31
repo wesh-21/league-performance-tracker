@@ -6,6 +6,7 @@ import PointManagementModal from "../PointManagementModal/PointManagementModal";
 
 // Constants
 const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
+const BACKEND_URL = "http://localhost:5000";
 
 // Hooks
 const usePlayerManagement = () => {
@@ -14,7 +15,7 @@ const usePlayerManagement = () => {
   const fetchPlayers = async () => {
     try {
       console.log("Fetching players...");
-      const response = await axios.get("http://localhost:5000/players");
+      const response = await axios.get(`${BACKEND_URL}/players`);
       setPlayers(response.data);
     } catch (error) {
       console.error("Error fetching players:", error);
@@ -26,7 +27,7 @@ const usePlayerManagement = () => {
     if (playerNameandTag.trim()) {
       const [playerName, tag] = playerNameandTag.split(/\s*#\s*/);
       try {
-        await axios.post("http://localhost:5000/players", { name: playerName, tag: tag });
+        await axios.post(`${BACKEND_URL}/players`, { name: playerName, tag: tag });
         await fetchPlayers();
       } catch (error) {
         console.error("Error adding player:", error);
@@ -37,7 +38,7 @@ const usePlayerManagement = () => {
   const updateLastGames = async () => {
     try {
       console.log('Updating last games...');
-      const response = await axios.get('http://localhost:5000/update-last-games');
+      const response = await axios.get(`${BACKEND_URL}/update-last-games`);
       console.log(response.data.message);
       await fetchPlayers();
     } catch (error) {
@@ -48,7 +49,7 @@ const usePlayerManagement = () => {
   const modifyPlayerPoints = async (id, category, value) => {
     const formattedCategory = category.toLowerCase().replace(" ", "_").toUpperCase();
     try {
-      await axios.put(`http://localhost:5000/players/${id}/${formattedCategory}`, { value });
+      await axios.put(`${BACKEND_URL}/players/${id}/${formattedCategory}`, { value });
       fetchPlayers();
     } catch (error) {
       console.error(`Error updating ${category} points for player ID ${id}:`, error);
@@ -57,7 +58,7 @@ const usePlayerManagement = () => {
 
   const deletePlayer = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/players/${id}`);
+      await axios.delete(`${BACKEND_URL}/players/${id}`);
       fetchPlayers();
     } catch (error) {
       console.error("Error deleting player:", error);
@@ -122,7 +123,7 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
   const handleRefreshClick = async (playerId) => {
     setLoadingPlayerId(playerId); // Set the loading state to show a loading indicator
     try {
-      const response = await axios.get(`http://localhost:5000/update-last-game/${playerId}`);
+      const response = await axios.get(`${BACKEND_URL}/update-last-game/${playerId}`);
       console.log(`Player ${playerId} data updated:`, response.data);
       fetchPlayers(); // Refresh player list
     } catch (error) {

@@ -13,7 +13,7 @@ import { getPuuidByRiotId, getMatchesByPuuid, getMatchByMatchId } from './RiotAp
 dotenv.config();
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 3000;
 const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
 
 
@@ -349,5 +349,5 @@ app.delete('/players/:id', (req, res) => {
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port: ${PORT}`);
 });
