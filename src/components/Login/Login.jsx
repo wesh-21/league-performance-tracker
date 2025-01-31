@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import styles from './Login.module.css';
 
+const BACKEND_URL = process.env.BACKEND_URL || "https://league-performance-tracker.onrender.com";
+
 const Login = ({ setAuthToken, setUsername }) => {
   const [usernameInput, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
@@ -14,7 +16,7 @@ const Login = ({ setAuthToken, setUsername }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/login', { username: usernameInput, password });
+      const response = await axios.post(`${BACKEND_URL}/login`, { username: usernameInput, password });
 
       setAuthToken(response.data.token);
       localStorage.setItem('authToken', response.data.token); // Store token persistently

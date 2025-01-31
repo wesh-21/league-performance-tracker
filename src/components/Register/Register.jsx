@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import styles from './Register.module.css';
 
+const BACKEND_URL = process.env.BACKEND_URL || "https://league-performance-tracker.onrender.com";
+
 const Register = ({ setAuthToken }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -15,7 +17,7 @@ const Register = ({ setAuthToken }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/register', { username, password });
+      const response = await axios.post(`${BACKEND_URL}/register`, { username, password });
 
       setSuccess(response.data.message);
       setError('');
