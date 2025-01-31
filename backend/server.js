@@ -70,6 +70,7 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
+  console.log("Attempting to login with username: ", username);
 
   db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
     if (err || !user) {
