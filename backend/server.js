@@ -90,6 +90,7 @@ app.post('/login', (req, res) => {
 
 // Get all players
 app.get('/players', (req, res) => {
+  console.log("Fetching all players...");
   db.all('SELECT * FROM players', [], (err, rows) => {
     if (err) {
       res.status(400).json({ error: err.message });
