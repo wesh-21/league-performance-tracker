@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import styles from './Register.module.css';
 
-const BACKEND_URL = process.env.BACKEND_URL || "https://league-performance-tracker.onrender.com";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://league-performance-tracker.onrender.com";
 
 const Register = ({ setAuthToken }) => {
   const [username, setUsername] = useState('');

@@ -184,10 +184,11 @@ const updatePlayerPoints = async (player, res) => {
     if (latestMatchId === player.last_match_id) return;
 
     const matchData = await getMatchByMatchId(latestMatchId);
-    parseMatchData(matchData, player.puuid, player.id); // Don't pass res to parseMatchData
-
     // uncomment to save data to file
+    //console.log("Saving match data to file...");
     //fs.writeFileSync(`./matches/${latestMatchId}.json`, JSON.stringify(matchData, null, 2)); 
+
+    parseMatchData(matchData, player.puuid, player.id); // Don't pass res to parseMatchData
 
     db.run(
       'UPDATE players SET last_match_id = ? WHERE id = ?',
@@ -209,6 +210,11 @@ const parseMatchData = (match, puuid, playerId) => {
 
   if (!player) {
     console.error(`Player with PUUID ${puuid} not found in match`);
+    return;
+  }
+
+  if (match.info.gameMode !== 'CLASSIC') {
+    console.log(`This game mode is not supported yet: ${match.info.gameMode}`);
     return;
   }
 

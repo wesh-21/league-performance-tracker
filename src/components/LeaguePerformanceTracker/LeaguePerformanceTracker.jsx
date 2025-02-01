@@ -6,7 +6,7 @@ import PointManagementModal from "../PointManagementModal/PointManagementModal";
 
 // Constants
 const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
-const BACKEND_URL = process.env.BACKEND_URL || "https://league-performance-tracker.onrender.com";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://league-performance-tracker.onrender.com";
 
 // Hooks
 const usePlayerManagement = () => {
