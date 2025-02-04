@@ -8,6 +8,7 @@ const Login = ({ setAuthToken, setUsername }) => {
   const [usernameInput, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!usernameInput || !password) {
@@ -15,20 +16,31 @@ const Login = ({ setAuthToken, setUsername }) => {
       return;
     }
 
-    try {
-      const response = await axios.post(`${BACKEND_URL}/login`, { username: usernameInput, password });
+    setError(''); // Clear previous errors
+    setLoading(true);
 
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/auth/login`, { username: usernameInput, password });
+
+      if (!response.data.token) {
+        throw new Error('No token received');
+      }
+      
       setAuthToken(response.data.token);
-      localStorage.setItem('authToken', response.data.token); // Store token persistently
-      localStorage.setItem('username', usernameInput); // Store username persistently
+      sessionStorage.setItem('authToken', response.data.token); // Store token persistently
+      sessionStorage.setItem('username', usernameInput); // Store username persistently
       setUsername(usernameInput); // Update the username state in Main
+      setUsernameInput(''); // Clear username field
+      setPassword(''); // Clear password field
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className={ styles['login-container'] }>
+    <div className={styles['login-container']}>
       <h2>Login</h2>
       {error && <p className="error-message">{error}</p>}
       <input
@@ -36,14 +48,18 @@ const Login = ({ setAuthToken, setUsername }) => {
         placeholder="Username"
         value={usernameInput}
         onChange={(e) => setUsernameInput(e.target.value)}
+        disabled={loading}
       />
       <input
         type="password"
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        disabled={loading}
       />
-      <button onClick={handleLogin}>Login</button>
+      <button onClick={handleLogin} disabled={loading}>
+        {loading ? 'Logging in...' : 'Login'}
+      </button>
     </div>
   );
 };

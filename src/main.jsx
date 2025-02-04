@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
@@ -7,15 +7,25 @@ import Register from './components/Register/Register';
 import LeaguePerformanceTracker from './components/LeaguePerformanceTracker/LeaguePerformanceTracker';
 
 const Main = () => {
-  const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
-  const [username, setUsername] = useState('');
+  const [authToken, setAuthToken] = useState(sessionStorage.getItem('authToken'));
+  const [username, setUsername] = useState(sessionStorage.getItem('username') || '');
   const [isRegistering, setIsRegistering] = useState(false);
+
+  // Effect to watch for authToken change and redirect if set
+  useEffect(() => {
+    if (authToken) {
+      setUsername(sessionStorage.getItem('username')); // Ensure username is set after login/registration
+    }
+  }, [authToken]);
 
   if (!authToken) {
     return (
       <div>
         {isRegistering ? (
-          <Register setAuthToken={setAuthToken} />
+          <Register 
+            setAuthToken={setAuthToken} 
+            setUsername={setUsername} 
+          />
         ) : (
           <Login setAuthToken={setAuthToken} setUsername={setUsername} />
         )}

@@ -1,0 +1,26 @@
+/* MatchLogs.module.css */
+
+.matchCard {
+    border: 2px solid #e2e8f0; /* Light gray border */
+    border-radius: 8px; /* Slightly rounded corners */
+    padding: 16px;
+    margin-bottom: 16px; /* Space between each match card */
+    transition: background-color 0.2s ease; /* Smooth hover effect */
+  }
+  
+  .matchCard:hover {
+    background-color: #272471 ; /* Light gray background on hover */
+  }
+  
+  .green-text {
+    color: #38a169; /* Green color */
+  }
+  
+  .red-text {
+    color: #e53e3e; /* Red color */
+  }
+  
+  .text-gray {
+    color: #4a5568; /* Gray color for non-highlighted text */
+  }
+  

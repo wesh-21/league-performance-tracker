@@ -27,6 +27,11 @@ Obtain list of matches by puuid:
 /lol/match/v5/matches/by-puuid/{puuid}/ids
 
 
+GET
+	https://lol-web-api.op.gg/api/v1.0/internal/bypass/summoners/euw/zfUyW8Vi_s9bWPXvmnDjNT7o6kPsxIgaNCte8IRkZ3c8WJM/most-champions/rank?game_type=RANKED&season_id=31
+
+OAUTH:
+https://support-developer.riotgames.com/hc/en-us/articles/22897607341075-OAuth-Client-Documentation
 
 puid ch4t r3str1ct3d: UXffrosIxGdjWLiVUGukhnc2iTNmQq4rr1D32QA1sjdu_s9n_8q_6paH7pqs9RrLE7himAcaXpXLLw
 

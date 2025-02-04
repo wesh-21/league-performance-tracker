@@ -3,6 +3,8 @@ import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import PatchNotesPanel from "../PatchNotesPanel/PatchNotesPanel";
 import PointManagementModal from "../PointManagementModal/PointManagementModal";
+import MatchLogs from "../MatchLogs/MatchLogs";
+import styles from "./LeaguePerformanceTracker.module.css";
 
 // Constants
 const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
@@ -15,7 +17,7 @@ const usePlayerManagement = () => {
   const fetchPlayers = async () => {
     try {
       console.log("Fetching players...");
-      const response = await axios.get(`${BACKEND_URL}/players`);
+      const response = await axios.get(`${BACKEND_URL}/api/players`);
       setPlayers(response.data);
     } catch (error) {
       console.error("Error fetching players:", error);
@@ -27,7 +29,7 @@ const usePlayerManagement = () => {
     if (playerNameandTag.trim()) {
       const [playerName, tag] = playerNameandTag.split(/\s*#\s*/);
       try {
-        await axios.post(`${BACKEND_URL}/players`, { name: playerName, tag: tag });
+        await axios.post(`${BACKEND_URL}/api/players`, { name: playerName, tag: tag });
         await fetchPlayers();
       } catch (error) {
         console.error("Error adding player:", error);
@@ -38,7 +40,7 @@ const usePlayerManagement = () => {
   const updateLastGames = async () => {
     try {
       console.log('Updating last games...');
-      const response = await axios.get(`${BACKEND_URL}/update-last-games`);
+      const response = await axios.get(`${BACKEND_URL}/api/update-last-games`);
       console.log(response.data.message);
       await fetchPlayers();
     } catch (error) {
@@ -49,7 +51,7 @@ const usePlayerManagement = () => {
   const modifyPlayerPoints = async (id, category, value) => {
     const formattedCategory = category.toLowerCase().replace(" ", "_").toUpperCase();
     try {
-      await axios.put(`${BACKEND_URL}/players/${id}/${formattedCategory}`, { value });
+      await axios.put(`${BACKEND_URL}/api/players/${id}/${formattedCategory}`, { value });
       fetchPlayers();
     } catch (error) {
       console.error(`Error updating ${category} points for player ID ${id}:`, error);
@@ -58,7 +60,7 @@ const usePlayerManagement = () => {
 
   const deletePlayer = async (id) => {
     try {
-      await axios.delete(`${BACKEND_URL}/players/${id}`);
+      await axios.delete(`${BACKEND_URL}/api/players/${id}`);
       fetchPlayers();
     } catch (error) {
       console.error("Error deleting player:", error);
@@ -83,6 +85,7 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
   const [loadingPlayerId, setLoadingPlayerId] = useState(null);
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
   const [isPatchNotesVisible, setIsPatchNotesVisible] = useState(false);
+  const [selectedMatchLogs, setSelectedMatchLogs] = useState(null);
 
   const { 
     players, 
@@ -94,17 +97,17 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
   } = usePlayerManagement();
 
   useEffect(() => {
-    // Fetch auth token and loggedInUser from localStorage
-    const storedToken = localStorage.getItem("authToken");
-    const storedUser = localStorage.getItem("username");
+    // Fetch auth token and loggedInUser from sessionStorage
+    const storedToken = sessionStorage.getItem("authToken");
+    const storedUser = sessionStorage.getItem("username");
 
     if (storedToken) {
-      console.log("Restoring auth token from localStorage:", storedToken);
-      setAuthToken(storedToken); // Restore the token from localStorage
+      console.log("Restoring auth token from sessionStorage:", storedToken);
+      setAuthToken(storedToken); // Restore the token from sessionStorage
     }
 
     if (storedUser) {
-      setLoggedInUser(storedUser); // Restore the username from localStorage
+      setLoggedInUser(storedUser); // Restore the username from sessionStorage
     }
 
     fetchPlayers(); // Load initial players
@@ -123,13 +126,21 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
   const handleRefreshClick = async (playerId) => {
     setLoadingPlayerId(playerId); // Set the loading state to show a loading indicator
     try {
-      const response = await axios.get(`${BACKEND_URL}/update-last-game/${playerId}`);
+      const response = await axios.get(`${BACKEND_URL}/api/update-last-game/${playerId}`);
       console.log(`Player ${playerId} data updated:`, response.data);
       fetchPlayers(); // Refresh player list
     } catch (error) {
       console.error(`Error updating player ${playerId}:`, error);
     } finally {
       setLoadingPlayerId(null); // Reset the loading state
+    }
+  };
+
+  const handlePlayerClick = (player) => {
+    if (selectedMatchLogs?.id === player.id) {
+      setSelectedMatchLogs(null);
+    } else {
+      setSelectedMatchLogs(player);
     }
   };
 
@@ -154,8 +165,8 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
   const handleLogout = () => {
     setAuthToken(null); // Clear auth token
     setUsername(''); // Clear username
-    localStorage.removeItem('authToken'); // Remove token from localStorage
-    localStorage.removeItem('username'); // Remove username from localStorage
+    sessionStorage.removeItem('authToken'); // Remove token from sessionStorage
+    sessionStorage.removeItem('username'); // Remove username from sessionStorage
   };
 
   return (
@@ -222,8 +233,8 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
               <div key={player.id} className="player-list-item">
                 {/* Player Name */}
                 <span
-                  className="player-name"
-                  onClick={() => setSelectedPlayer(players.find((p) => p.id === player.id) || null)}
+                  className="player-name cursor-pointer hover:text-blue-600"
+                  onClick={() => handlePlayerClick(players.find(p => p.id === player.id))}
                 >
                   {player.name}
                 </span>
@@ -234,7 +245,7 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
                 {/* Refresh Button */}
                 <button
                   onClick={() => handleRefreshClick(player.id)}
-                  disabled={loadingPlayerId === player.id} // Disable button while refreshing
+                  disabled={loadingPlayerId === player.id}
                   className="refresh-button"
                 >
                   {loadingPlayerId === player.id ? "Refreshing..." : "Refresh"}
@@ -251,6 +262,19 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
               onDelete={deletePlayer}
               onPointModify={modifyPlayerPoints}
             />
+          )}
+
+          {/* Match Logs Panel */}
+          {selectedMatchLogs && (
+            <div className={styles['match-logs-panel']}>
+              <div className={styles['content']}>
+            <MatchLogs
+              playerId={selectedMatchLogs.id}
+              playerName={selectedMatchLogs.name}
+              onClose={() => setSelectedMatchLogs(null)}
+            />
+            </div>
+          </div>
           )}
 
           {/* Logout Button */}

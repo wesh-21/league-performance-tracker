@@ -4,32 +4,44 @@ import styles from './Register.module.css';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://league-performance-tracker.onrender.com";
 
-const Register = ({ setAuthToken }) => {
-  const [username, setUsername] = useState('');
+const Register = ({ setAuthToken, setUsername }) => {
+  const [usernameInput, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
 
   const handleRegister = async () => {
-    if (!username || !password) {
-      setError('Please enter a username and password.');
+    if (!usernameInput || !password) {
+      setError('Please enter both a username and a password.');
       return;
     }
-
+    setLoading(true);
+    setError('');
+    setSuccess('');
     try {
-      const response = await axios.post(`${BACKEND_URL}/register`, { username, password });
-
+      const response = await axios.post(`${BACKEND_URL}/api/auth/register`, { username: usernameInput, password });
       setSuccess(response.data.message);
-      setError('');
       
-      // Auto-login after successful registration
-      if (response.data.token) {
-        setAuthToken(response.data.token);
-        localStorage.setItem('authToken', response.data.token);
+      if (!response.data.token) {
+        throw new Error('No token received');
       }
+      
+      // Use sessionStorage for consistency with Main component
+      sessionStorage.setItem('authToken', response.data.token);
+      sessionStorage.setItem('username', usernameInput);
+      
+      setAuthToken(response.data.token);
+      setUsername(usernameInput);
+      
+      setUsernameInput('');
+      setPassword('');
     } catch (error) {
+      console.log('Error registering:', error);
       setError(error.response?.data?.message || 'Registration failed. Please try again.');
       setSuccess('');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,16 +53,20 @@ const Register = ({ setAuthToken }) => {
       <input
         type="text"
         placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        value={usernameInput}  // Changed from username to usernameInput
+        onChange={(e) => setUsernameInput(e.target.value)}
+        disabled={loading}
       />
       <input
         type="password"
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        disabled={loading}
       />
-      <button onClick={handleRegister}>Register</button>
+      <button onClick={handleRegister} disabled={loading}>
+        {loading ? 'Registering...' : 'Register'}
+      </button>
     </div>
   );
 };
