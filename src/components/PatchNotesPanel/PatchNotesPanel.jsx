@@ -11,20 +11,27 @@ const PatchNotesPanel = ({ isVisible, onToggle }) => {
           "Improved KDA calculation algorithm",
           "Fixed bug with vision score tracking",
           "Updated UI for better readability",
-          "Added support for multiple regions"
         ]
       },
       {
-        version: "13.9",
-        date: "2024-01-15",
+        version: "1.01",
+        date: "2024-02-01",
         changes: [
           "Introduced automated refresh system",
           "Enhanced player statistics display",
           "Added sorting functionality",
-          "Fixed player deletion issues",
           "Improved error handling"
         ]
       },
+      {
+        version: "1.02",
+        date: "2024-02-04",
+        changes: [
+          "Added player match history feature",
+          "Fixed performance bottlenecks",
+          "Enhanced security measures"
+        ]
+      }
     ];
  
     return (
