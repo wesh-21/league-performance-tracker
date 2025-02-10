@@ -5,19 +5,22 @@ import PatchNotesPanel from "../PatchNotesPanel/PatchNotesPanel";
 import PointManagementModal from "../PointManagementModal/PointManagementModal";
 import MatchLogs from "../MatchLogs/MatchLogs";
 import styles from "./LeaguePerformanceTracker.module.css";
+import { useUser } from '../../main';
+import FriendsPanel from '../FriendsPanel/FriendsPanel';
 
-// Constants
 const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold Earned", "CS"];
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://league-performance-tracker.onrender.com";
 
-// Hooks
 const usePlayerManagement = () => {
   const [players, setPlayers] = useState([]);
+  const { authToken } = useUser();
 
   const fetchPlayers = async () => {
     try {
       console.log("Fetching players...");
-      const response = await axios.get(`${BACKEND_URL}/api/players`);
+      const response = await axios.get(`${BACKEND_URL}/api/players`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
       setPlayers(response.data);
     } catch (error) {
       console.error("Error fetching players:", error);
@@ -29,7 +32,10 @@ const usePlayerManagement = () => {
     if (playerNameandTag.trim()) {
       const [playerName, tag] = playerNameandTag.split(/\s*#\s*/);
       try {
-        await axios.post(`${BACKEND_URL}/api/players`, { name: playerName, tag: tag });
+        await axios.post(`${BACKEND_URL}/api/players`, 
+          { name: playerName, tag: tag },
+          { headers: { Authorization: `Bearer ${authToken}` }}
+        );
         await fetchPlayers();
       } catch (error) {
         console.error("Error adding player:", error);
@@ -40,7 +46,10 @@ const usePlayerManagement = () => {
   const updateLastGames = async () => {
     try {
       console.log('Updating last games...');
-      const response = await axios.get(`${BACKEND_URL}/api/update-last-games`);
+      const response = await axios.get(
+        `${BACKEND_URL}/api/update-last-games`,
+        { headers: { Authorization: `Bearer ${authToken}` }}
+      );
       console.log(response.data.message);
       await fetchPlayers();
     } catch (error) {
@@ -51,7 +60,11 @@ const usePlayerManagement = () => {
   const modifyPlayerPoints = async (id, category, value) => {
     const formattedCategory = category.toLowerCase().replace(" ", "_").toUpperCase();
     try {
-      await axios.put(`${BACKEND_URL}/api/players/${id}/${formattedCategory}`, { value });
+      await axios.put(
+        `${BACKEND_URL}/api/players/${id}/${formattedCategory}`,
+        { value },
+        { headers: { Authorization: `Bearer ${authToken}` }}
+      );
       fetchPlayers();
     } catch (error) {
       console.error(`Error updating ${category} points for player ID ${id}:`, error);
@@ -60,7 +73,10 @@ const usePlayerManagement = () => {
 
   const deletePlayer = async (id) => {
     try {
-      await axios.delete(`${BACKEND_URL}/api/players/${id}`);
+      await axios.delete(
+        `${BACKEND_URL}/api/players/${id}`,
+        { headers: { Authorization: `Bearer ${authToken}` }}
+      );
       fetchPlayers();
     } catch (error) {
       console.error("Error deleting player:", error);
@@ -77,8 +93,8 @@ const usePlayerManagement = () => {
   };
 };
 
-const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
-  const [loggedInUser, setLoggedInUser] = useState('');
+const LeaguePerformanceTracker = () => {
+  const { id: userID, username: loggedInUser, authToken, clearUser } = useUser();
   const [playerNameandTag, setPlayerNameandTag] = useState("");
   const [activeTab, setActiveTab] = useState("Overall");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -97,42 +113,36 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
   } = usePlayerManagement();
 
   useEffect(() => {
-    // Fetch auth token and loggedInUser from sessionStorage
-    const storedToken = sessionStorage.getItem("authToken");
-    const storedUser = sessionStorage.getItem("username");
-
-    if (storedToken) {
-      console.log("Restoring auth token from sessionStorage:", storedToken);
-      setAuthToken(storedToken); // Restore the token from sessionStorage
+    if (authToken) {
+      fetchPlayers();
+      console.log('User entered the app:', loggedInUser);
+      console.log("userid", userID);
+      const intervalId = setInterval(updateLastGames, 15 * 60 * 1000);
+      return () => clearInterval(intervalId);
     }
-
-    if (storedUser) {
-      setLoggedInUser(storedUser); // Restore the username from sessionStorage
-    }
-
-    fetchPlayers(); // Load initial players
-    const intervalId = setInterval(updateLastGames, 15 * 60 * 1000); // Update every 15 minutes
-    return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [setAuthToken]);
+  }, [authToken]);
 
   const handleAddPlayer = async () => {
     if (!playerNameandTag.trim()) return;
-    setIsAddingPlayer(true); // Show loading state
+    setIsAddingPlayer(true);
     await addPlayer(playerNameandTag);
     setPlayerNameandTag("");
-    setIsAddingPlayer(false); // Hide loading state
+    setIsAddingPlayer(false);
   };
 
   const handleRefreshClick = async (playerId) => {
-    setLoadingPlayerId(playerId); // Set the loading state to show a loading indicator
+    setLoadingPlayerId(playerId);
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/update-last-game/${playerId}`);
+      const response = await axios.get(
+        `${BACKEND_URL}/api/update-last-game/${playerId}`,
+        { headers: { Authorization: `Bearer ${authToken}` }}
+      );
       console.log(`Player ${playerId} data updated:`, response.data);
-      fetchPlayers(); // Refresh player list
+      fetchPlayers();
     } catch (error) {
       console.error(`Error updating player ${playerId}:`, error);
     } finally {
-      setLoadingPlayerId(null); // Reset the loading state
+      setLoadingPlayerId(null);
     }
   };
 
@@ -162,29 +172,24 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
     }));
   };
 
-  const handleLogout = () => {
-    setAuthToken(null); // Clear auth token
-    setUsername(''); // Clear username
-    sessionStorage.removeItem('authToken'); // Remove token from sessionStorage
-    sessionStorage.removeItem('username'); // Remove username from sessionStorage
-  };
-
   return (
     <div className="app-container">
       <PatchNotesPanel 
         isVisible={isPatchNotesVisible} 
         onToggle={() => setIsPatchNotesVisible(!isPatchNotesVisible)} 
       />
+      <FriendsPanel />
+
+
+
       <div className="main-content">
         <div className="w-screen h-screen">
           <h1 className="main-header">League Performance Tracker</h1>
 
-          {/* Display the logged in user's username */}
           <div className="user-info">
             <span>Welcome, {loggedInUser}!</span>
           </div>
 
-          {/* Add Player Section */}
           <div className="add-player-section">
             <input
               type="text"
@@ -195,14 +200,13 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
             />
             <button
               onClick={handleAddPlayer}
-              disabled={isAddingPlayer} // Disable button while adding player
+              disabled={isAddingPlayer}
               className="btn-primary"
             >
               {isAddingPlayer ? "Adding..." : "Add Player"}
             </button>
           </div>
 
-          {/* Tabs */}
           <div className="tabs">
             {CATEGORIES.map((category) => (
               <button
@@ -215,7 +219,6 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
             ))}
           </div>
 
-          {/* Bar Chart */}
           <div className="bar-chart-container">
             <h2>{activeTab} Leaderboard</h2>
             <BarChart width={700} height={400} data={getPlayerPoints()}>
@@ -227,11 +230,9 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
             </BarChart>
           </div>
 
-          {/* Player List */}
           <div>
             {getPlayerPoints().map((player) => (
               <div key={player.id} className="player-list-item">
-                {/* Player Name */}
                 <span
                   className="player-name cursor-pointer hover:text-blue-600"
                   onClick={() => handlePlayerClick(players.find(p => p.id === player.id))}
@@ -239,10 +240,8 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
                   {player.name}
                 </span>
 
-                {/* Player Points */}
                 <span className="player-points">{player.points} points</span>
 
-                {/* Refresh Button */}
                 <button
                   onClick={() => handleRefreshClick(player.id)}
                   disabled={loadingPlayerId === player.id}
@@ -254,7 +253,6 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
             ))}
           </div>
 
-          {/* Modal */}
           {selectedPlayer && (
             <PointManagementModal
               player={selectedPlayer}
@@ -264,21 +262,19 @@ const LeaguePerformanceTracker = ({ setAuthToken, setUsername }) => {
             />
           )}
 
-          {/* Match Logs Panel */}
           {selectedMatchLogs && (
             <div className={styles['match-logs-panel']}>
               <div className={styles['content']}>
-            <MatchLogs
-              playerId={selectedMatchLogs.id}
-              playerName={selectedMatchLogs.name}
-              onClose={() => setSelectedMatchLogs(null)}
-            />
+                <MatchLogs
+                  playerId={selectedMatchLogs.id}
+                  playerName={selectedMatchLogs.name}
+                  onClose={() => setSelectedMatchLogs(null)}
+                />
+              </div>
             </div>
-          </div>
           )}
 
-          {/* Logout Button */}
-          <button onClick={handleLogout} className="btn-secondary">
+          <button onClick={clearUser} className="btn-secondary">
             Logout
           </button>
         </div>

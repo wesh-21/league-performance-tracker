@@ -1,0 +1,118 @@
+.friendsPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 240px;
+  height: 100vh;
+  background: rgba(1, 10, 19, 0.95);
+  color: #a09b8c;
+  padding: 15px;
+  overflow-y: auto;
+  border-left: 1px solid #1e2328;
+}
+
+.friendsPanel h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #f0e6d2;
+  margin: 15px 0 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.friendList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px;
+}
+
+.friendItem {
+  padding: 8px 10px;
+  margin: 2px 0;
+  border-radius: 3px;
+  background: rgba(30, 35, 40, 0.5);
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.friendItem:hover {
+  background: rgba(30, 35, 40, 0.8);
+}
+
+.friendItem button {
+  background: #0ac8b9;
+  color: #1e2328;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background 0.2s;
+}
+
+.friendItem button:hover {
+  background: #0ff3d6;
+}
+
+.friendItem button:last-child {
+  background: #1e2328;
+  color: #a09b8c;
+  margin-left: 6px;
+}
+
+.friendItem button:last-child:hover {
+  background: #282e35;
+}
+
+.friendsPanel input {
+  width: 100%;
+  padding: 8px 10px;
+  background: #1e2328;
+  border: 1px solid #463714;
+  border-radius: 3px;
+  color: #f0e6d2;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.friendsPanel input::placeholder {
+  color: #5b5a56;
+}
+
+.friendsPanel input:focus {
+  outline: none;
+  border-color: #785a28;
+}
+
+.error {
+  color: #ff4655;
+  padding: 8px;
+  background: rgba(255, 70, 85, 0.1);
+  border-radius: 3px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.searchResults {
+  list-style: none;
+  padding: 0;
+  margin: 5px 0;
+  background: #1e2328;
+  border-radius: 3px;
+  border: 1px solid #463714;
+}
+
+.searchResults li {
+  padding: 8px 10px;
+  color: #c8aa6e;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.searchResults li:hover {
+  background: rgba(200, 170, 110, 0.1);
+}

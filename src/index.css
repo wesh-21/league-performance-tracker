@@ -97,6 +97,137 @@ h1 {
   background-color: #666;
 }
 
+.friends-button {
+  position: absolute;
+  top: 15rem;
+  right: 15rem;
+  padding: 0.5rem 1rem;
+  background-color: #5a5b9e;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.friends-button:hover {
+  background-color: #666;
+}
+.friends-panel {
+  position: fixed;
+  right: -300px; /* Starts hidden */
+  top: 0;
+  width: 300px;
+  height: 100vh;
+  background-color: #1a1a1a;
+  color: #fff;
+  border-left: 1px solid #333;
+  z-index: 100;
+  transition: right 0.3s ease;
+}
+
+.friends-panel.visible {
+  right: 0; /* Slides in */
+}
+
+.friends-toggle {
+  position: fixed;
+  right: 20px;
+  top: 5rem;
+  z-index: 101;
+  padding: 10px 20px;
+  background-color: #272471;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.friends-toggle:hover {
+  background-color: #323291;
+}
+
+.friends-title {
+  padding: 20px;
+  margin: 0;
+  font-size: 1.5rem;
+  background-color: #272471;
+  color: white;
+  text-align: center;
+}
+
+.friends-content {
+  height: calc(100vh - 76px);
+  overflow-y: auto;
+  padding: 35px;
+  scrollbar-width: thin;
+  scrollbar-color: #272471 #1a1a1a;
+}
+
+.friends-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.friends-content::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.friends-content::-webkit-scrollbar-thumb {
+  background-color: #272471;
+  border-radius: 4px;
+}
+
+.friend-entry {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #333;
+}
+
+.friend-name {
+  margin: 0 0 5px 0;
+  color: #272471;
+  font-size: 1.2rem;
+}
+
+.friend-status {
+  margin: 0 0 15px 0;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.friend-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.friend-actions button {
+  padding: 8px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.friend-actions .accept {
+  background-color: #28a745;
+  color: white;
+}
+
+.friend-actions .reject {
+  background-color: #dc3545;
+  color: white;
+}
+
+.friend-actions .accept:hover {
+  background-color: #218838;
+}
+
+.friend-actions .reject:hover {
+  background-color: #c82333;
+}
+
 /* Tab Navigation */
 .tab-button {
   padding: 0.5rem 1rem;

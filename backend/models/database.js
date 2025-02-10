@@ -24,6 +24,15 @@ const db = new sqlite3.Database('./players.db', (err) => {
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS friendships (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id1 INTEGER NOT NULL,
+      user_id2 INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id1) REFERENCES users(id),
+      FOREIGN KEY (user_id2) REFERENCES users(id)
+    );
     `);
   }
 });

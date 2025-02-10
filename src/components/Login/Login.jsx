@@ -4,7 +4,7 @@ import styles from './Login.module.css';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://league-performance-tracker.onrender.com";
 
-const Login = ({ setAuthToken, setUsername }) => {
+const Login = ({ setAuthToken, updateUser }) => {
   const [usernameInput, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,22 +16,28 @@ const Login = ({ setAuthToken, setUsername }) => {
       return;
     }
 
-    setError(''); // Clear previous errors
+    setError('');
     setLoading(true);
 
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/auth/login`, { username: usernameInput, password });
+      const response = await axios.post(`${BACKEND_URL}/api/auth/login`, {
+        username: usernameInput,
+        password
+      });
 
       if (!response.data.token) {
         throw new Error('No token received');
       }
-      
+
       setAuthToken(response.data.token);
-      sessionStorage.setItem('authToken', response.data.token); // Store token persistently
-      sessionStorage.setItem('username', usernameInput); // Store username persistently
-      setUsername(usernameInput); // Update the username state in Main
-      setUsernameInput(''); // Clear username field
-      setPassword(''); // Clear password field
+      updateUser({
+        userId: response.data.userId,
+        username: usernameInput,
+        authToken: response.data.token
+      });
+
+      setUsernameInput('');
+      setPassword('');
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed. Please try again.');
     } finally {

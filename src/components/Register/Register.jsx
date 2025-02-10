@@ -4,7 +4,7 @@ import styles from './Register.module.css';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://league-performance-tracker.onrender.com";
 
-const Register = ({ setAuthToken, setUsername }) => {
+const Register = ({ setAuthToken, updateUser }) => {
   const [usernameInput, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,24 +16,30 @@ const Register = ({ setAuthToken, setUsername }) => {
       setError('Please enter both a username and a password.');
       return;
     }
+
     setLoading(true);
     setError('');
     setSuccess('');
+
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/auth/register`, { username: usernameInput, password });
+      const response = await axios.post(`${BACKEND_URL}/api/auth/register`, {
+        username: usernameInput,
+        password
+      });
+
       setSuccess(response.data.message);
-      
+
       if (!response.data.token) {
         throw new Error('No token received');
       }
-      
-      // Use sessionStorage for consistency with Main component
-      sessionStorage.setItem('authToken', response.data.token);
-      sessionStorage.setItem('username', usernameInput);
-      
+
       setAuthToken(response.data.token);
-      setUsername(usernameInput);
-      
+      updateUser({
+        userId: response.data.userId,
+        username: usernameInput,
+        authToken: response.data.token
+      });
+
       setUsernameInput('');
       setPassword('');
     } catch (error) {
@@ -53,7 +59,7 @@ const Register = ({ setAuthToken, setUsername }) => {
       <input
         type="text"
         placeholder="Username"
-        value={usernameInput}  // Changed from username to usernameInput
+        value={usernameInput}
         onChange={(e) => setUsernameInput(e.target.value)}
         disabled={loading}
       />

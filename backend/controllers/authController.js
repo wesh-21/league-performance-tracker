@@ -18,7 +18,7 @@ export const registerUser = async (req, res) => {
     const userId = this.lastID;
     const token = jwt.sign({ id: userId, username }, SECRET_KEY, { expiresIn: '1h' });
 
-    res.json({ message: 'Registration successful', token });
+    res.json({ message: 'Registration successful', token, userId });
   });
 };
 
@@ -36,6 +36,7 @@ export const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
-    res.json({ message: 'Login successful', token });
+    res.json({ message: 'Login successful', token, userId: user.id });
   });
 };
+
