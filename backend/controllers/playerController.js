@@ -1,89 +1,78 @@
-import db from '../models/database.js';
+import pool from '../models/database.js';
 import {
   getPuuidByRiotId,
   getMatchesByPuuid,
   getMatchByMatchId,
 } from '../RiotApi.js';
 
-export const getAllPlayers = (req, res) => {
-  db.all('SELECT * FROM players', [], (err, rows) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    res.json(rows);
-  });
+export const getAllPlayers = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM players');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
-export const addPlayer = (req, res) => {
+export const addPlayer = async (req, res) => {
   const { name, tag } = req.body;
-  db.run('INSERT INTO players (name, tag) VALUES (?, ?)', [name, tag], function (err) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
+  try {
+    const result = await pool.query(
+      'INSERT INTO players (name, tag) VALUES ($1, $2) RETURNING *',
+      [name, tag]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const updateLastGames = async (req, res) => {
+  try {
+    const { rows: players } = await pool.query('SELECT * FROM players');
+    
+    for (const player of players) {
+      try {
+        await updatePlayerPoints(player);
+      } catch (error) {
+        console.error(`Error processing player 1 ${player.name}:`, error.message);
+      }
+    }
+    
+    res.json({ message: 'Last game data updated for all players' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+export const updatePlayerLastGame = async (req, res) => {
+  const { id } = req.params;
+  console.log(`Updating last game data for player ${id}`);
+  
+  try {
+    const { rows } = await pool.query('SELECT * FROM players WHERE id = $1', [id]);
+    const player = rows[0];
+    
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
     }
 
-    res.json({ name, tag, id: this.lastID });
-  });
-};
-
-export const updateLastGames = (req, res) => {
-  try {
-    db.all('SELECT * FROM players', [], async (err, players) => {
-      if (err) {
-        res.status(500).json({ error: 'Database error', details: err.message });
-        return;
-      }
-
-      for (const player of players) {
-        try {
-          await updatePlayerPoints(player, res); // Now it sends the response after all updates are completed
-        } catch (error) {
-          console.error(`Error processing player ${player.name}:`, error.message);
-        }
-      }
-
-      res.json({ message: 'Last game data updated for all players' }); // Send response after all updates are finished
-    });
+    await updatePlayerPoints(player);
+    res.json({ message: `Last game data updated for player ${player.name}` });
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
-export const updatePlayerLastGame = (req, res) => {
-  const { id } = req.params; // Get player ID from URL parameter
-  console.log(`Updating last game data for player ${id}`);
-  try {
-    db.get('SELECT * FROM players WHERE id = ?', [id], async (err, player) => {
-      if (err) {
-        res.status(500).json({ error: 'Database error', details: err.message });
-        return;
-      }
-
-      if (!player) {
-        res.status(404).json({ error: 'Player not found' });
-        return;
-      }
-
-      try {
-        await updatePlayerPoints(player, res); // Update the player's last game data
-        res.json({ message: `Last game data updated for player ${player.name}` }); // Send response after update
-      } catch (error) {
-        console.error(`Error processing player ${player.name}:`, error.message);
-        res.status(500).json({ error: 'Error updating player data', details: error.message });
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
-  }
-};
-
-const updatePlayerPoints = async (player, res) => {
+const updatePlayerPoints = async (player) => {
   try {
     if (!player.puuid) {
       const accountData = await getPuuidByRiotId(player.name, player.tag);
       player.puuid = accountData.puuid;
-      db.run('UPDATE players SET puuid = ? WHERE id = ?', [player.puuid, player.id]);
+      await pool.query(
+        'UPDATE players SET puuid = $1 WHERE id = $2',
+        [player.puuid, player.id]
+      );
     }
 
     const matchIds = await getMatchesByPuuid(player.puuid, 0, 1);
@@ -93,37 +82,47 @@ const updatePlayerPoints = async (player, res) => {
     if (latestMatchId === player.last_match_id) return;
 
     const matchData = await getMatchByMatchId(latestMatchId);
-    // uncomment to save data to file
-    //console.log("Saving match data to file...");
-    //fs.writeFileSync(`./matches/${latestMatchId}.json`, JSON.stringify(matchData, null, 2)); 
-
-    
     const categories = parseMatchData(matchData, player.puuid);
 
-    // Use Promise.all to update all categories in parallel
-    const updatePromises = Object.entries(categories).map(([category, points]) =>
-    new Promise((resolve, reject) => {
-      updatePlayerField(player.id, category, points, (err, result) => {
-        if (err) reject(err);
-        else resolve(result);
-      });
-    })
-  );
-
-  // Wait for all updates to finish
-  Promise.all(updatePromises).catch((error) => {
-    console.error('Error updating player stats:', error.message);
-  });
-
-    db.run(
-      'UPDATE players SET last_match_id = ? WHERE id = ?',
-      [latestMatchId, player.id]
+    // Update all categories in parallel using Promise.all
+    await Promise.all(
+      Object.entries(categories).map(([category, points]) =>
+        updatePlayerField(player.id, category, points)
+      )
     );
 
-    // Only send the response once all updates are done
-
+    await pool.query(
+      'UPDATE players SET last_match_id = $1 WHERE id = $2',
+      [latestMatchId, player.id]
+    );
   } catch (error) {
-    console.error(`Error processing player ${player.name}:`, error.message);
+    console.error(`Error processing player 2 ${player.name}:`, error.message);
+    throw error;
+  }
+};
+
+const updatePlayerField = async (id, field, value) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT ${field} FROM players WHERE id = $1`,
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      throw new Error('Player not found');
+    }
+
+    const currentValue = rows[0][field] || 0;
+    const newValue = currentValue + value;
+    
+    await pool.query(
+      `UPDATE players SET ${field} = $1 WHERE id = $2`,
+      [newValue, id]
+    );
+    
+    return { id, field, oldValue: currentValue, newValue };
+  } catch (error) {
+    throw error;
   }
 };
 
@@ -192,30 +191,7 @@ const parseMatchData = (match, puuid) => {
 };
 
 
-const updatePlayerField = (id, field, value) => {
-  return new Promise((resolve, reject) => {
-    db.get(`SELECT ${field} FROM players WHERE id = ?`, [id], (err, row) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      if (row) {
-        const currentValue = row[field] || 0;
-        const newValue = currentValue + value;
-        db.run(`UPDATE players SET ${field} = ? WHERE id = ?`, [newValue, id], function (err) {
-          if (err) {
-            reject(err);
-            return;
-          }
-          resolve({ id, field, oldValue: currentValue, newValue });
-        });
-      } else {
-        reject(new Error('Player not found'));
-      }
-    });
-  });
-};
-
+// Update the individual field update functions
 export const updateOverall = async (req, res) => {
   try {
     const result = await updatePlayerField(req.params.id, 'OVERALL', req.body.value);
@@ -270,70 +246,68 @@ export const updateCS = async (req, res) => {
   }
 };
 
-export const deletePlayer = (req, res) => {
-  db.run('DELETE FROM players WHERE id = ?', [req.params.id], function (err) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    res.json({ deleted: this.changes });
-  });
+export const deletePlayer = async (req, res) => {
+  try {
+    const result = await pool.query(
+      'DELETE FROM players WHERE id = $1 RETURNING *',
+      [req.params.id]
+    );
+    res.json({ deleted: result.rowCount });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
-export const getMatchLogs = (req, res) => {
+export const getMatchLogs = async (req, res) => {
   console.log('Request params:', req.params);
   const { id } = req.params;
   console.log(`Fetching match logs for player ${id}`);
 
-  db.get('SELECT * FROM players WHERE id = ?', [id], async (err, player) => {
-    if (err) {
-      res.status(500).json({ error: 'Database error', details: err.message });
-      return;
-    }
+  try {
+    const { rows } = await pool.query('SELECT * FROM players WHERE id = $1', [id]);
+    const player = rows[0];
 
     if (!player) {
-      res.status(404).json({ error: 'Player not found' });
-      return;
+      return res.status(404).json({ error: 'Player not found' });
     }
 
-    try {
-      if (!player.puuid) {
-        const accountData = await getPuuidByRiotId(player.name, player.tag);
-        player.puuid = accountData.puuid;
-        db.run('UPDATE players SET puuid = ? WHERE id = ?', [player.puuid, player.id]);
-      }
+    if (!player.puuid) {
+      const accountData = await getPuuidByRiotId(player.name, player.tag);
+      player.puuid = accountData.puuid;
+      await pool.query(
+        'UPDATE players SET puuid = $1 WHERE id = $2',
+        [player.puuid, player.id]
+      );
+    }
 
-      const matchIds = await getMatchesByPuuid(player.puuid, 0, 10);
-      if (matchIds.length === 0) {
-        res.json({ message: `Player ${id} has no recent matches`, categories: [] });
-        return;
-      }
+    const matchIds = await getMatchesByPuuid(player.puuid, 0, 10);
+    if (matchIds.length === 0) {
+      return res.json({ message: `Player ${id} has no recent matches`, categories: [] });
+    }
 
-      const categoriesArray = [];
+    const categoriesArray = [];
 
-      for (const matchId of matchIds) {
-        try {
-          const matchData = await getMatchByMatchId(matchId);
-          const categories = parseMatchData(matchData, player.puuid);
-          categories['WIN'] = matchData.info.participants.find(p => p.puuid === player.puuid).win;
+    for (const matchId of matchIds) {
+      try {
+        const matchData = await getMatchByMatchId(matchId);
+        const categories = parseMatchData(matchData, player.puuid);
+        console.log("Categories: ", categories);
+        if (categories) {
+          const participant = matchData.info.participants.find(p => p.puuid === player.puuid);
+          categories['WIN'] = participant.win;
           categories['DATE'] = matchData.info.gameCreation;
-          categories['CHAMPION'] = matchData.info.participants.find(p => p.puuid === player.puuid).championName;
-          
-          if (categories && Object.keys(categories).length > 0) {
-            categoriesArray.push(categories);
-          }
-        } catch (error) {
-          console.error(`Error processing match ${matchId}:`, error.message);
-          // Continue with the next match even if one fails
-          continue;
+          categories['CHAMPION'] = participant.championName;
+          categoriesArray.push(categories);
         }
+      } catch (error) {
+        console.error(`Error processing match ${matchId}:`, error.message);
+        continue;
       }
-      console.log("Categories Array: ", categoriesArray);
-      
-      res.json({ message: `Player ${id} data fetched`, categories: categoriesArray });
-  }
-  catch (error) {
+    }
+
+    console.log("Categories Array: ", categoriesArray);
+    res.json({ message: `Player ${id} data fetched`, categories: categoriesArray });
+  } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
-}
-)};
+};
