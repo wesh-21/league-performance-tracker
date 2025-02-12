@@ -160,7 +160,7 @@ const LeaguePerformanceTracker = () => {
         id: player.id,
         name: player.name,
         points: CATEGORIES.slice(1).reduce(
-          (sum, category) => sum + (player[category.toUpperCase().replace(" ", "_")] || 0),
+          (sum, category) => sum + (player[category.toLowerCase().replace(" ", "_")] || 0),
           0
         ),
       }));
