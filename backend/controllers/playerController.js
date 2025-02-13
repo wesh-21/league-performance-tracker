@@ -120,7 +120,7 @@ const updatePlayerField = async (id, field, value) => {
       [newValue, id]
     );
     
-    return { id, field, oldValue: currentValue, newValue };
+    return { id, field, currentValue, newValue };
   } catch (error) {
     throw error;
   }
@@ -168,22 +168,22 @@ const parseMatchData = (match, puuid) => {
   console.log("Best Stats: ", bestStats);
 
   const categories = {
-    KDA: 0,
-    DAMAGE: 0,
-    GOLD_EARNED: 0,
-    CS: 0,
-    VISION_SCORE: 0,
+    kda: 0,
+    damage: 0,
+    gold_earned: 0,
+    cs: 0,
+    viison_score: 0,
   };
   // Determine points for each category (Only if player wins)
   console.log("Player Win: ", player.win);
 
   if( Boolean(player.win) == true ) {
     console.log("Ganhamos caralho");
-    categories.KDA = playerStats.kda === bestStats.bestKDA ? 1 : 0;
-    categories.DAMAGE = playerStats.totalDamageDealtToChampions === bestStats.mostDamage ? 1 : 0;
-    categories.GOLD_EARNED = playerStats.goldEarned === bestStats.mostGold ? 1 : 0;
-    categories.CS = playerStats.totalCs === bestStats.mostCS ? 1 : 0;
-    categories.VISION_SCORE = playerStats.visionScore === bestStats.mostVisionScore ? 1 : 0;
+    categories.kda = playerStats.kda === bestStats.bestKDA ? 1 : 0;
+    categories.damage = playerStats.totalDamageDealtToChampions === bestStats.mostDamage ? 1 : 0;
+    categories.gold_earned = playerStats.goldEarned === bestStats.mostGold ? 1 : 0;
+    categories.cs = playerStats.totalCs === bestStats.mostCS ? 1 : 0;
+    categories.viison_score = playerStats.visionScore === bestStats.mostVisionScore ? 1 : 0;
   }
 
   console.log("Categories: ", categories);
