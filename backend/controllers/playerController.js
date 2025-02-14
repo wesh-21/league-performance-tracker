@@ -172,7 +172,7 @@ const parseMatchData = (match, puuid) => {
     damage: 0,
     gold_earned: 0,
     cs: 0,
-    vison_score: 0,
+    vision_score: 0,
   };
   // Determine points for each category (Only if player wins)
   console.log("Player Win: ", player.win);
@@ -183,7 +183,7 @@ const parseMatchData = (match, puuid) => {
     categories.damage = playerStats.totalDamageDealtToChampions === bestStats.mostDamage ? 1 : 0;
     categories.gold_earned = playerStats.goldEarned === bestStats.mostGold ? 1 : 0;
     categories.cs = playerStats.totalCs === bestStats.mostCS ? 1 : 0;
-    categories.vison_score = playerStats.visionScore === bestStats.mostVisionScore ? 1 : 0;
+    categories.vision_score = playerStats.visionScore === bestStats.mostVisionScore ? 1 : 0;
   }
 
   console.log("Categories: ", categories);
