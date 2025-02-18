@@ -1,6 +1,13 @@
 import pool from '../models/database.js';
 import jwt from 'jsonwebtoken';
 
+
+export const getUserAvatar = async (req, res) => {
+    console.log('Request params:', req.params);
+    const { userId } = req.params;
+    res.json({ avatar: `5978.jpg` });
+  };
+  
 export const getFriendships = async (req, res) => {
     const { userId } = req.params;
 

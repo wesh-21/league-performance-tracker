@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Crown, TrendingUp, TrendingDown, Minus, Loader2, RefreshCw } from 'lucide-react';
+import { Crown, TrendingUp, TrendingDown, Minus, Loader2, RefreshCw, UserPlus2 } from 'lucide-react';
+import MatchHistoryPopup from '../MatchHistoryPopUp/MatchHistoryPopup';
+import PodiumLayout from '../PodiumLayout/PodiumLayout';
+import CategorySelector from '../CategorySelector/CategorySelector';
+import UserAvatar from '../UserAvatar/UserAvatar';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://league-performance-tracker.onrender.com";
 const CATEGORIES = ["Overall", "KDA", "Vision Score", "Damage", "Gold", "CS"];
@@ -14,6 +18,7 @@ const LeagueTracker = () => {
   const [loadingPlayerId, setLoadingPlayerId] = useState(null);
   const [playerNameAndTag, setPlayerNameAndTag] = useState('');
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
+  const [selectedMatchHistory, setSelectedMatchHistory] = useState(null);
 
   // Fetch players from backend
   const fetchPlayers = async () => {
@@ -28,7 +33,7 @@ const LeagueTracker = () => {
         id: player.id,
         name: player.name,
         username: `@${player.name.toLowerCase().replace(/\s+/g, '_')}`,
-        avatar: `/api/placeholder/150/150?text=${player.name.substring(0, 2).toUpperCase()}`,
+        summoner_icon: `/summonerIcons/${player.summoner_icon}.jpg`,
         scores: {
           overall: calculateOverallScore(player),
           kda: player.kda || 0,
@@ -38,9 +43,7 @@ const LeagueTracker = () => {
           damage: player.damage || 0
         }
       }));
-      console.log("received players:", response.data);
-      console.log("Players:", transformedPlayers);
-      
+      console.log("Transformed players:", transformedPlayers);
       setPlayers(transformedPlayers);
       setIsLoading(false);
     } catch (error) {
@@ -50,8 +53,6 @@ const LeagueTracker = () => {
   };
 
   const calculateOverallScore = (player) => {
-  
-    // Get the values, using 0 as default if the value is missing
     const scores = {
       kda: player.kda || 0,
       gold: player.gold_earned || 0,
@@ -60,17 +61,13 @@ const LeagueTracker = () => {
       damage: player.damage || 0
     };
   
-  
-    // Calculate weighted average
     const overallScore = (
       scores.kda + scores.gold + scores.cs + scores.vision_score + scores.damage
-    )
+    );
   
-    // Ensure the score is between 0 and 100, rounded to nearest integer
     return overallScore;
   };
 
-  // Add new player
   const handleAddPlayer = async () => {
     if (!playerNameAndTag.trim()) return;
     setIsAddingPlayer(true);
@@ -91,7 +88,6 @@ const LeagueTracker = () => {
     }
   };
 
-  // Refresh player data
   const handleRefreshClick = async (playerId) => {
     setLoadingPlayerId(playerId);
     try {
@@ -109,7 +105,6 @@ const LeagueTracker = () => {
 
   useEffect(() => {
     fetchPlayers();
-    // Set up auto-refresh interval
     const intervalId = setInterval(() => {
       axios.get(
         `${BACKEND_URL}/api/update-last-games`,
@@ -127,56 +122,117 @@ const LeagueTracker = () => {
     });
     setPrevScores(scores);
   }, [selectedCategory]);
-
-  const handleCategoryClick = (category) => {
-    setSelectedCategory(category);
-    setIsOpen(false);
-  };
-
-  const getScoreForCategory = (player) => {
-    const category = selectedCategory.toLowerCase().replace(' ', '_');
-    console.log("Category:", category);
-    return player.scores[category];
-  };
-
-  const getScoreChange = (player) => {
-    const currentScore = getScoreForCategory(player);
-    const prevScore = prevScores[player.id] || currentScore;
-    return currentScore - prevScore;
-  };
-
   const ScoreChangeIndicator = ({ change }) => {
     if (change === 0) return <Minus className="w-4 h-4 text-gray-400" />;
     if (change > 0) return <TrendingUp className="w-4 h-4 text-green-500" />;
     return <TrendingDown className="w-4 h-4 text-red-500" />;
   };
-
   const formatScore = (score, category) => {
     if (category === 'Kda') return score.toFixed(2);
     if (category === 'Gold') return score.toLocaleString();
     return score;
   };
 
+  const getScoreForCategory = (player) => {
+    if (!player) return 0;
+    const category = selectedCategory.toLowerCase().replace(' ', '_');
+    return player.scores[category];
+  };
+
+  const getScoreChange = (player) => {
+    if (!player) return 0;
+    const currentScore = getScoreForCategory(player);
+    const prevScore = prevScores[player.id] || currentScore;
+    return currentScore - prevScore;
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#151729] text-white flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  // Empty state when no players exist
+  if (players.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#151729] text-white p-6">
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="bg-[#151729] p-4 rounded-lg border-2 border-orange-500 transform hover:scale-105 transition-transform">
+            <h1 className="text-3xl font-bold text-center text-blue-500">LEAGUE TRACKER</h1>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+        <div className="bg-[#151729] p-8 rounded-lg text-center">
+            <UserPlus2 className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-4">No Players Added Yet</h2>
+            <p className="text-gray-400 mb-6">Add your first player to start tracking their performance!</p>
+            
+            <div className="flex gap-4 justify-center">
+              <input
+                type="text"
+                value={playerNameAndTag}
+                onChange={(e) => setPlayerNameAndTag(e.target.value)}
+                placeholder="Enter player name + #tag (e.g. PlayerName #EUW)"
+                className="px-4 py-2 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-96"
+              />
+              <button
+                onClick={handleAddPlayer}
+                disabled={isAddingPlayer}
+                className="px-6 py-2 bg-blue-500 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50"
+              >
+                {isAddingPlayer ? "Adding..." : "Add Player"}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   const sortedPlayers = [...players].sort((a, b) => getScoreForCategory(b) - getScoreForCategory(a));
 
+  // Podium section with null checks
+  const renderPodium = () => {
+    if (players.length < 3) {
+      return (
+        <div className="text-center mb-8">
+          <p className="text-gray-400">Add more players to see the ranking podium!</p>
+        </div>
+      );
+    }
+  
+    return (
+      <PodiumLayout
+        sortedPlayers={sortedPlayers}
+        selectedCategory={selectedCategory}
+        setSelectedMatchHistory={setSelectedMatchHistory}
+        formatScore={formatScore}
+        getScoreForCategory={getScoreForCategory}
+        getScoreChange={getScoreChange}
+        ScoreChangeIndicator={ScoreChangeIndicator}
+      />
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <div className="relative min-h-screen bg-[#151729] text-white p-6 overflow-hidden">
       {/* Header */}
-      <div className="max-w-2xl mx-auto mb-8">
-        <div className="bg-gray-800 p-4 rounded-lg border-2 border-orange-500 transform hover:scale-105 transition-transform">
-          <h1 className="text-3xl font-bold text-center text-blue-500">LEAGUE TRACKER</h1>
+      <div className="w-full bg-gray-900 py-6 relative">
+        <UserAvatar /> {/* Added UserAvatar here */}
+        <div className="max-w-2xl mx-auto text-center">
+          <img 
+            src="/assets/logo.png" 
+            alt="League Tracker Logo" 
+            className="h-24 mx-auto md:h-32"
+          />
         </div>
       </div>
 
-      {/* Add Player Section */}
+
+      {/* Add Player Form */}
       <div className="max-w-2xl mx-auto mb-8">
         <div className="flex gap-4">
           <input
@@ -196,46 +252,9 @@ const LeagueTracker = () => {
         </div>
       </div>
 
-      {/* Top 3 Players */}
+      {/* Podium */}
       <div className="max-w-2xl mx-auto mb-8">
-        <div className="flex justify-center items-end gap-4">
-          {/* 2nd Place */}
-          <div className="text-center mb-4 transform hover:scale-105 transition-transform">
-            <div className="w-16 h-16 rounded-full bg-blue-500 mx-auto mb-2 overflow-hidden ring-2 ring-blue-300">
-              <img src={sortedPlayers[1]?.avatar} alt={sortedPlayers[1]?.name} className="w-full h-full object-cover" />
-            </div>
-            <div className="text-sm">{sortedPlayers[1]?.name}</div>
-            <div className="font-bold flex items-center justify-center gap-1">
-              {formatScore(getScoreForCategory(sortedPlayers[1]), selectedCategory)}
-              <ScoreChangeIndicator change={getScoreChange(sortedPlayers[1])} />
-            </div>
-          </div>
-
-          {/* 1st Place */}
-          <div className="text-center mb-4 transform hover:scale-110 transition-transform">
-            <Crown className="w-6 h-6 text-yellow-500 mx-auto mb-1 animate-bounce" />
-            <div className="w-20 h-20 rounded-full bg-blue-500 mx-auto mb-2 overflow-hidden ring-4 ring-yellow-500">
-              <img src={sortedPlayers[0]?.avatar} alt={sortedPlayers[0]?.name} className="w-full h-full object-cover" />
-            </div>
-            <div className="text-sm">{sortedPlayers[0]?.name}</div>
-            <div className="font-bold flex items-center justify-center gap-1">
-              {formatScore(getScoreForCategory(sortedPlayers[0]), selectedCategory)}
-              <ScoreChangeIndicator change={getScoreChange(sortedPlayers[0])} />
-            </div>
-          </div>
-
-          {/* 3rd Place */}
-          <div className="text-center mb-4 transform hover:scale-105 transition-transform">
-            <div className="w-16 h-16 rounded-full bg-blue-500 mx-auto mb-2 overflow-hidden ring-2 ring-orange-300">
-              <img src={sortedPlayers[2]?.avatar} alt={sortedPlayers[2]?.name} className="w-full h-full object-cover" />
-            </div>
-            <div className="text-sm">{sortedPlayers[2]?.name}</div>
-            <div className="font-bold flex items-center justify-center gap-1">
-              {formatScore(getScoreForCategory(sortedPlayers[2]), selectedCategory)}
-              <ScoreChangeIndicator change={getScoreChange(sortedPlayers[2])} />
-            </div>
-          </div>
-        </div>
+        {renderPodium()}
       </div>
 
       {/* Player List */}
@@ -244,10 +263,11 @@ const LeagueTracker = () => {
           <div 
             key={player.id}
             className="flex items-center justify-between bg-gray-800 p-4 rounded-lg mb-2 transform hover:scale-102 transition-all hover:bg-gray-750"
+            onClick={() => setSelectedMatchHistory(player)}
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-blue-500 overflow-hidden">
-                <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                <img src={player.summoner_icon} alt={player.name} className="w-full h-full object-cover" />
               </div>
               <div>
                 <div className="font-semibold">{player.name}</div>
@@ -273,38 +293,24 @@ const LeagueTracker = () => {
         ))}
       </div>
 
-      {/* Category Selector */}
-      <div className="max-w-2xl mx-auto">
-        <div className="relative flex flex-col items-center">
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="w-40 px-6 py-2 bg-gray-800 rounded-md transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-gray-700"
-          >
-            {selectedCategory}
-          </button>
+{/* Category Selector */}
+    <CategorySelector 
+      categories={CATEGORIES}
+      selectedCategory={selectedCategory}
+      setSelectedCategory={setSelectedCategory}
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+    />
 
-          <div 
-            className={`absolute top-full mt-2 flex gap-4 transition-all duration-300 origin-top ${
-              isOpen 
-                ? 'opacity-100 transform-none' 
-                : 'opacity-0 -translate-y-4 pointer-events-none'
-            }`}
-          >
-            {CATEGORIES
-              .filter(cat => cat !== selectedCategory)
-              .map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryClick(category)}
-                  className="w-40 px-6 py-2 bg-gray-800 rounded-md hover:bg-gray-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {category}
-                </button>
-              ))}
-          </div>
-        </div>
-      </div>
+      {selectedMatchHistory && (
+        <MatchHistoryPopup
+          playerId={selectedMatchHistory.id}
+          playerName={selectedMatchHistory.name}
+          onClose={() => setSelectedMatchHistory(null)}
+        />
+      )}
     </div>
+    
   );
 };
 

@@ -12,6 +12,7 @@ import {
     updateCS,
     deletePlayer,
     getMatchLogs,
+    getSummonerById,
 } from '../controllers/playerController.js';
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.post('/players', addPlayer);
 router.get('/update-last-games', updateLastGames);
 router.get('/update-last-game/:id', updatePlayerLastGame);
 router.get('/players/match-logs/:id', getMatchLogs);
+router.get('/players/summoner/:id', getSummonerById)
 
 
 router.put('/players/:id/overall', updateOverall);

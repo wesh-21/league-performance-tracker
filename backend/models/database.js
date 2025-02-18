@@ -21,6 +21,7 @@ const initializeDatabase = async () => {
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         tag TEXT NOT NULL,
+        summoner_icon INTEGER NOT NULL,
         puuid TEXT,
         last_match_id TEXT,
         OVERALL INTEGER NOT NULL DEFAULT 0,

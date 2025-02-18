@@ -8,7 +8,8 @@ import {
     getUserId,
     getFriends,
     getFriendRequests,
-    getFriendRequestsSent
+    getFriendRequestsSent,
+    getUserAvatar,
 } from '../controllers/userController.js';
 import { authenticateJWT } from '../middleware/authMiddleware.js';
 
@@ -18,6 +19,7 @@ const router = express.Router();
 //router.use(authenticateJWT);
 
 router.get('/user', getUserId);
+router.get('/user/avatar/:userId', getUserAvatar);
 
 // Friendship routes
 router.get('/friendships/:userId', getFriendships);

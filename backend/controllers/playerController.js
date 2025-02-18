@@ -3,6 +3,7 @@ import {
   getPuuidByRiotId,
   getMatchesByPuuid,
   getMatchByMatchId,
+  getSummonerByPuuid,
 } from '../RiotApi.js';
 
 export const getAllPlayers = async (req, res) => {
@@ -14,18 +15,47 @@ export const getAllPlayers = async (req, res) => {
   }
 };
 
+export const getSummonerById = async (req, res) => {
+  console.log('Request params:', req.params);
+  const { id } = req.params;
+
+  try {
+      console.log("Player PUUID: outVdWu98hGX2vhEHQJ4LrPhU0NDfUhibg4Exqi8fB9b13KI0gmN8cciJe_UpCy7zhzI87AFaioYqg");
+      const summonerData = await getSummonerByPuuid("outVdWu98hGX2vhEHQJ4LrPhU0NDfUhibg4Exqi8fB9b13KI0gmN8cciJe_UpCy7zhzI87AFaioYqg");
+      console.log("Summoner Data: ", summonerData);
+      return res.json(summonerData);
+
+  } catch (error) {
+      console.error(`Error fetching summoner data for player ID ${id}:`, error.message);
+      res.status(500).json({ error: "Failed to fetch summoner data" });
+  }
+};
+
 export const addPlayer = async (req, res) => {
   const { name, tag } = req.body;
+
   try {
+    // Fetch PUUID using Riot ID
+    const accountData = await getPuuidByRiotId(name, tag);
+    const puuid = accountData.puuid;
+
+    // Fetch summoner details using PUUID
+    const summonerData = await getSummonerByPuuid(puuid);
+    const summonerIcon = summonerData.profileIconId;
+
+    // Insert player into database with PUUID and summoner icon
     const result = await pool.query(
-      'INSERT INTO players (name, tag) VALUES ($1, $2) RETURNING *',
-      [name, tag]
+      'INSERT INTO players (name, tag, puuid, summoner_icon) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, tag, puuid, summonerIcon]
     );
+
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('Error adding player:', err);
     res.status(400).json({ error: err.message });
   }
 };
+
 
 export const updateLastGames = async (req, res) => {
   try {

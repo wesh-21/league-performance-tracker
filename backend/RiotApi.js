@@ -4,21 +4,30 @@ import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
-
-const RIOT_API_BASE_URL = 'https://europe.api.riotgames.com';
-const RIOT_API_KEY = process.env.RIOT_API_KEY; // Ensure this is set in your .env file
+const RIOT_ACCOUNT_API_URL = 'https://europe.api.riotgames.com'; // For account endpoints
+const RIOT_EUW_API_URL = 'https://euw1.api.riotgames.com'; // For summoner endpoints
+const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
 if (!RIOT_API_KEY) {
   console.error('RIOT_API_KEY is not set in .env');
   process.exit(1);
 }
 
-// Axios instance for Riot API
+// Common headers for all requests
+const commonHeaders = {
+  'X-Riot-Token': RIOT_API_KEY,
+};
+
+// Axios instance for Account API
 const riotApiClient = axios.create({
-  baseURL: RIOT_API_BASE_URL,
-  headers: {
-    'X-Riot-Token': RIOT_API_KEY,
-  },
+  baseURL: RIOT_ACCOUNT_API_URL,
+  headers: commonHeaders
+});
+
+// Axios instance for EUW Regional API
+const euwApiClient = axios.create({
+  baseURL: RIOT_EUW_API_URL,
+  headers: commonHeaders
 });
 
 // Fetch PUUID and summonerID from RiotID
@@ -27,21 +36,25 @@ export const getPuuidByRiotId = async (gameName, tagLine) => {
     const response = await riotApiClient.get(
       `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
     );
-    return response.data; // Contains PUUID and account information
+    return response.data;
   } catch (error) {
     console.error('Error fetching account by Riot ID:', error.response?.data || error.message);
     throw error;
   }
 };
 
-
 // Fetch summoner data by PUUID
 export const getSummonerByPuuid = async (puuid) => {
   try {
-    const response = await riotApiClient.get(`/lol/summoner/v4/summoners/by-puuid/${puuid}`);
-    return response.data; // Contains summonerID and other summoner data
+    const response = await euwApiClient.get(`/lol/summoner/v4/summoners/by-puuid/${puuid}`);
+    return response.data;
   } catch (error) {
-    console.error('Error fetching summoner by PUUID:', error.response?.data || error.message);
+    console.error('Full error details:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers
+    });
     throw error;
   }
 };
