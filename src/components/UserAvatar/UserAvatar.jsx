@@ -30,22 +30,20 @@ const UserAvatar = () => {
     fetchAvatar();
   }, [userId, authToken, BACKEND_URL]);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isMenuOpen && !event.target.closest('.user-menu-container')) {
         setIsMenuOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMenuOpen]);
 
   return (
-    <div className="fixed top-4 right-4 z-50 user-menu-container">
+    <div className="fixed top-4 right-2 sm:right-4 z-50 user-menu-container">
       <div className="relative group">
-        <div 
+        <div
           className="w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
@@ -61,33 +59,32 @@ const UserAvatar = () => {
             </div>
           )}
         </div>
-
+        
         {/* Username tooltip on hover */}
         <div className="absolute right-0 mt-2 py-1 px-2 bg-gray-800 text-gray-200 text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
           {username || 'Guest'}
         </div>
-
+        
         {/* Options Menu */}
-        {isMenuOpen && (
-          <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5">
-            <div className="py-1">
-              <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
-                Signed in as<br />
-                <span className="font-medium">{username}</span>
-              </div>
-              <button
-                onClick={() => {
-                  clearUser();
-                  setIsMenuOpen(false);
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-            </div>
+        <div 
+          className={`absolute right-0 mt-2 w-20 md:w-36 sm:w-48 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 transform transition-all duration-200 ease-in-out origin-top-right ${
+            isMenuOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className="px-2 sm:px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
+            <span className="font-medium truncate block">{username}</span>
           </div>
-        )}
+          <button
+            onClick={() => {
+              clearUser();
+              setIsMenuOpen(false);
+            }}
+            className="w-full text-left px-2 sm:px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );
